@@ -1,0 +1,3436 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Дурак Онлайн — Преміум Клуб</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome & Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- These libraries are only needed by optional features. Keep them from
+         blocking the page parser and the menu's own JavaScript. -->
+    <script defer src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           1. ДИЗАЙН-СИСТЕМА ТА ТЕМИ (БЕЗ ШТУЧНОГО ПІДСВІЧУВАННЯ)
+           ========================================================================== */
+        :root {
+            --bg-table: #143222;
+            --bg-table-border: #0d2217;
+            --felt-pattern-opacity: 0.035;
+            --card-w: 88px;
+            --card-h: 126px;
+            --card-radius: 6px;
+            
+            --brass-gold: #c69c52;
+            --brass-gold-hover: #dbb36c;
+            --panel-bg: rgba(18, 24, 20, 0.95);
+            --panel-border: rgba(198, 156, 82, 0.25);
+            --text-main: #f0f3f1;
+            --text-muted: #9aa8a0;
+            --danger-bg: #8c2b2b;
+            --danger-hover: #a33434;
+            --action-bg: #29573c;
+            --action-hover: #346e4d;
+        }
+
+        /* Теми фону столу */
+        body.theme-felt-emerald { --bg-table: #153826; --bg-table-border: #0d2318; }
+        body.theme-felt-navy    { --bg-table: #13243a; --bg-table-border: #0a1320; }
+        body.theme-felt-slate   { --bg-table: #1c2128; --bg-table-border: #111419; }
+        body.theme-felt-crimson { --bg-table: #3d1518; --bg-table-border: #22090b; }
+        body.theme-felt-wood    { --bg-table: #2b1f18; --bg-table-border: #160e0a; }
+
+        /* Сорочки карт (гарантований пріоритет) */
+        .card-back-classic, .card.card-back-classic, .opp-card-mini.card-back-classic, .discard-leaf.card-back-classic {
+            background-color: #183153 !important;
+            background-image: 
+                radial-gradient(#d4af37 1.5px, transparent 1.5px),
+                radial-gradient(#d4af37 1.5px, #183153 1.5px) !important;
+            background-size: 14px 14px !important;
+            background-position: 0 0, 7px 7px !important;
+            border: 2px solid #f8f6f0 !important;
+        }
+        .card-back-crimson, .card.card-back-crimson, .opp-card-mini.card-back-crimson, .discard-leaf.card-back-crimson {
+            background-color: #4a1217 !important;
+            background-image: 
+                radial-gradient(#c69c52 1.5px, transparent 1.5px),
+                radial-gradient(#c69c52 1.5px, #4a1217 1.5px) !important;
+            background-size: 14px 14px !important;
+            background-position: 0 0, 7px 7px !important;
+            border: 2px solid #f8f6f0 !important;
+        }
+        .card-back-gold, .card.card-back-gold, .opp-card-mini.card-back-gold, .discard-leaf.card-back-gold {
+            background-color: #1e1e1e !important;
+            background-image: repeating-linear-gradient(45deg, #c69c52 0, #c69c52 1.5px, transparent 0, transparent 7px) !important;
+            border: 2px solid #f8f6f0 !important;
+        }
+        .card-back-obsidian, .card.card-back-obsidian, .opp-card-mini.card-back-obsidian, .discard-leaf.card-back-obsidian {
+            background-color: #121214 !important;
+            background-image: none !important;
+            border: 2px solid #3a3a44 !important;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1) !important;
+        }
+
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-table-border);
+            color: var(--text-main);
+            height: 100dvh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .poker-table-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: radial-gradient(ellipse at 50% 48%, var(--bg-table) 0%, var(--bg-table-border) 100%);
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+        }
+
+        .felt-grain {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, var(--felt-pattern-opacity)) 1.5px, transparent 0);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ==========================================================================
+           2. ВЕРХНІЙ БАР НАВІГАЦІЇ
+           ========================================================================== */
+        header.game-header {
+            position: relative;
+            z-index: 1200 !important;
+            height: 50px;
+            background: rgba(10, 16, 12, 0.94);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: var(--brass-gold);
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-badge {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #d1ded6;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-icon-nav {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 0.88rem;
+            position: relative;
+        }
+        .btn-icon-nav:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .chat-unread-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+        }
+
+        /* ==========================================================================
+           3. КАРТКИ В СТИЛІ АТЛАСНОЇ КОЛОДИ (ЗІ СКРІНШОТА)
+           ========================================================================== */
+        .card {
+            width: var(--card-w);
+            height: var(--card-h);
+            border-radius: var(--card-radius);
+            position: relative;
+            flex-shrink: 0;
+            cursor: grab;
+            user-select: none;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+            transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s ease;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card:active {
+            cursor: grabbing;
+        }
+
+        @media (min-width: 768px) {
+            :root {
+                --card-w: 96px;
+                --card-h: 138px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --card-w: 60px;
+                --card-h: 86px;
+                --card-radius: 5px;
+            }
+            header.game-header {
+                height: 44px;
+                padding: 0 8px;
+            }
+            .header-brand span:not(.mode-badge) { display: none; }
+            .mode-badge { font-size: 0.6rem; padding: 1px 5px; }
+            .btn-icon-nav { width: 30px; height: 30px; font-size: 0.75rem; }
+            .table-layout { padding: 4px 6px; height: calc(100% - 44px); }
+            .opponent-zone { min-height: 65px; }
+            .opponent-profile-pill { padding: 3px 8px 3px 4px; gap: 6px; }
+            .avatar-frame { width: 28px; height: 28px; }
+            .battleground { gap: 6px; min-height: 100px; padding: 6px; }
+            .card-pair-slot { width: calc(var(--card-w) + 10px); }
+            .deck-stack-area { width: var(--card-w); height: var(--card-h); }
+            .deck-count-badge { font-size: 0.65rem; padding: 1px 5px; }
+            .trump-suit-indicator { font-size: 1.2rem; width: 26px; height: 26px; }
+            .btn-game-action { padding: 7px 12px; font-size: 0.75rem; }
+            .opp-card-mini { width: calc(var(--card-w) * 0.6); height: calc(var(--card-h) * 0.6); margin-left: -10px; }
+            .chat-drawer { width: 100% !important; right: 0 !important; border-radius: 12px 12px 0 0; }
+            .emoji-picker-drawer { width: 100% !important; right: 0 !important; border-radius: 12px 12px 0 0; }
+            .player-action-bar { gap: 8px; }
+            .btn-player-action { padding: 5px 10px; font-size: 0.72rem; }
+            .discard-pile-container { width: calc(var(--card-w) + 8px); min-height: calc(var(--card-h) + 8px); }
+            .idle-table-banner { padding: 16px; }
+            .idle-banner-title { font-size: 1.1rem; }
+            .idle-banner-subtitle { font-size: 0.72rem; }
+        }
+
+        /* Зображення карти (Атласна колода зі скріншота) */
+        .card-img-atlas {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Звичайний підйом карти при наведенні (БЕЗ ПІДСВІЧУВАННЯ!) */
+        .player-hand-cards .card:hover {
+            transform: translateY(-16px) !important;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.45);
+            z-index: 50 !important;
+        }
+
+        /* Стан перетягування */
+        .card.dragging-now {
+            opacity: 0.15 !important;
+        }
+
+        .flying-card-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            width: var(--card-w);
+            height: var(--card-h);
+            border-radius: var(--card-radius);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.6);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        /* ==========================================================================
+           4. ІГРОВІ ЗОНИ
+           ========================================================================== */
+        .table-layout {
+            position: relative;
+            z-index: 10;
+            height: calc(100% - 50px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px 14px;
+        }
+
+        /* Зона суперника з аватаром та спливаючими реакціями */
+        .opponent-zone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 85px;
+        }
+        .player-info-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .opponent-profile-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(14, 20, 16, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 12px 5px 6px;
+            border-radius: 40px;
+            margin-bottom: 4px;
+        }
+        .avatar-frame {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid var(--brass-gold);
+            overflow: hidden;
+            background: #232a25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--brass-gold);
+            flex-shrink: 0;
+        }
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .opponent-cards-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 52px;
+            overflow: visible;
+        }
+        .opp-card-mini {
+            width: 44px;
+            height: 60px;
+            border-radius: 5px;
+            margin-left: -22px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            flex-shrink: 0;
+            transition: margin 0.2s ease, transform 0.2s ease;
+        }
+        .opp-card-mini:first-child {
+            margin-left: 0;
+        }
+
+        /* Спливаючі 3D емодзі (Durak Online стікери) */
+        .emoji-bubble-float {
+            position: absolute;
+            z-index: 1000;
+            pointer-events: none;
+            animation: floatEmoji 2.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+        }
+        .emoji-bubble-float img {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+        }
+        @keyframes floatEmoji {
+            0%   { opacity: 0; transform: scale(0.4) translateY(20px); }
+            15%  { opacity: 1; transform: scale(1.15) translateY(0); }
+            30%  { transform: scale(1.0) translateY(-6px); }
+            80%  { opacity: 1; transform: scale(1.0) translateY(-14px); }
+            100% { opacity: 0; transform: scale(0.85) translateY(-36px); }
+        }
+
+        /* Центральна арена: Колода + Бійниця + Хаотичне Бито */
+        .arena-center {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            position: relative;
+            padding: 4px 0;
+        }
+
+        /* Ліва зона: Колода та відкритий козир під нею */
+        .deck-column {
+            width: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .deck-stack-area {
+            position: relative;
+            width: var(--card-w);
+            height: var(--card-h);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .trump-underlay {
+            position: absolute;
+            transform: rotate(-90deg) translateX(-48px);
+            z-index: 2;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+            border: 2px solid #d4af37 !important;
+        }
+        .deck-top-pile {
+            position: absolute;
+            z-index: 4;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.55);
+        }
+        .deck-count-badge {
+            position: absolute;
+            bottom: -8px;
+            z-index: 6;
+            background: #111814;
+            border: 1px solid var(--brass-gold);
+            color: var(--brass-gold);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .trump-suit-indicator {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.6rem;
+            line-height: 1;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
+            z-index: 7;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Центр: Бійниця (до 6 пар карт) */
+        .battleground {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 140px;
+            padding: 10px;
+            border-radius: 12px;
+            transition: background 0.2s ease;
+        }
+        .battleground.drag-over-active {
+            background: rgba(255, 255, 255, 0.04);
+            outline: 2px dashed rgba(198, 156, 82, 0.4);
+        }
+
+        .card-pair-slot {
+            position: relative;
+            width: var(--card-w);
+            height: var(--card-h);
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: var(--card-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .card-pair-slot.covered {
+            border-color: transparent;
+        }
+
+        .battle-card-attack {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+        }
+        .battle-card-defend {
+            position: absolute;
+            top: 16px;
+            left: 14px;
+            z-index: 5;
+            transform: rotate(6deg);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.55);
+        }
+
+        /* 1. ПРАВА ЗОНА: ХАОТИЧНО СКЛАДЕНІ КАРТИ У ВІДБОЇ ("БИТО") */
+        .discard-column {
+            width: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .discard-pile-container {
+            position: relative;
+            width: var(--card-w);
+            height: var(--card-h);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .discard-leaf {
+            position: absolute;
+            width: var(--card-w);
+            height: var(--card-h);
+            border-radius: var(--card-radius);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            pointer-events: none;
+            transition: transform 0.25s ease;
+        }
+        .discard-empty-box {
+            width: var(--card-w);
+            height: var(--card-h);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: var(--card-radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.25);
+            font-size: 0.72rem;
+            gap: 4px;
+        }
+        .discard-count-badge {
+            position: absolute;
+            bottom: -8px;
+            z-index: 6;
+            background: #111814;
+            border: 1px solid var(--brass-gold);
+            color: var(--brass-gold);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* Нижня частина: Кнопки дій та Рука гравця */
+        .player-bottom-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .action-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 6px;
+            min-height: 42px;
+        }
+
+        .btn-game-action {
+            padding: 10px 24px;
+            border-radius: 7px;
+            font-size: 0.94rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+        }
+        .btn-action-bito {
+            background: var(--action-bg);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .btn-action-bito:hover:not(:disabled) {
+            background: var(--action-hover);
+        }
+        .btn-action-take {
+            background: var(--danger-bg);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .btn-action-take:hover:not(:disabled) {
+            background: var(--danger-hover);
+        }
+        .btn-action-transfer {
+            background: #2d4563;
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .btn-action-transfer:hover:not(:disabled) {
+            background: #39567b;
+        }
+        .btn-game-action:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        .player-action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 6px 0 2px 0;
+        }
+        .btn-player-action {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-main);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.15s;
+            position: relative;
+        }
+        .btn-player-action:hover {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .turn-indicator-badge {
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin: 0 auto 4px auto;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+        .turn-indicator-badge.my-turn {
+            background: rgba(41, 87, 60, 0.85);
+            border: 1px solid rgba(100, 200, 120, 0.4);
+            color: #7de8a0;
+        }
+        .turn-indicator-badge.opp-turn {
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(150, 150, 200, 0.3);
+            color: #b0b8d0;
+        }
+
+        /* Рука гравця */
+        .player-hand-wrapper {
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 8px 0 4px 0;
+            overflow-x: auto;
+            overflow-y: visible;
+            scrollbar-width: none;
+        }
+        .player-hand-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+        .player-hand-cards {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0 20px;
+        }
+        .hand-card-slot {
+            margin-left: -34px;
+            transition: margin 0.2s ease;
+        }
+        .hand-card-slot:first-child {
+            margin-left: 0;
+        }
+        @media (min-width: 768px) {
+            .hand-card-slot {
+                margin-left: -30px;
+            }
+        }
+
+        /* ==========================================================================
+           5. АНІМАЦІЙНІ ЛІТАЮЧІ КАРТИ (БЕЗ ДУРНИХ ТРАЄКТОРІЙ)
+           ========================================================================== */
+        .flying-card-anim {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+            background: #fff;
+            overflow: hidden;
+        }
+
+        /* ==========================================================================
+           6. СТИЛЬНІ СПЛИВАЮЧІ ТОСТИ ДОСЯГНЕНЬ (TOASTS)
+           ========================================================================== */
+        .toast-container {
+            position: fixed;
+            top: 60px;
+            right: 18px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .achievement-toast {
+            background: rgba(18, 24, 20, 0.96);
+            border: 1px solid var(--brass-gold);
+            border-radius: 8px;
+            padding: 10px 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 340px;
+            transform: translateX(120%);
+            animation: slideInToast 0.35s forwards, fadeOutToast 0.4s 4.2s forwards;
+        }
+        @keyframes slideInToast { to { transform: translateX(0); } }
+        @keyframes fadeOutToast { to { opacity: 0; transform: translateY(-10px); } }
+        .toast-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(198, 156, 82, 0.15);
+            color: var(--brass-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .toast-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--brass-gold);
+        }
+        .toast-desc {
+            font-size: 0.74rem;
+            color: #d1ded6;
+            margin-top: 1px;
+        }
+
+        /* ==========================================================================
+           7. ВІКНО ЧАТУ ТА ЕМОДЗІ ПАНЕЛЬ
+           ========================================================================== */
+        /* Чат-панель */
+        .chat-drawer {
+            position: fixed;
+            bottom: 70px;
+            right: 16px;
+            width: 320px;
+            height: 420px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.22s cubic-bezier(0.2, 0.8, 0.25, 1);
+        }
+        .chat-drawer.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .chat-header {
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--brass-gold);
+        }
+        .chat-messages-box {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.82rem;
+        }
+        .chat-msg-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-width: 85%;
+        }
+        .chat-msg-row.mine {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+        .chat-msg-row.theirs {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+        .chat-msg-bubble {
+            padding: 6px 11px;
+            border-radius: 10px;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+        .chat-msg-row.mine .chat-msg-bubble {
+            background: #2b573c;
+            color: #fff;
+            border-bottom-right-radius: 2px;
+        }
+        .chat-msg-row.theirs .chat-msg-bubble {
+            background: rgba(255,255,255,0.1);
+            color: #e5ede8;
+            border-bottom-left-radius: 2px;
+        }
+        .chat-sender-name {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            padding: 0 4px;
+        }
+        .chat-quick-phrases {
+            display: flex;
+            gap: 5px;
+            padding: 6px 8px;
+            overflow-x: auto;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            scrollbar-width: none;
+        }
+        .chat-quick-phrases::-webkit-scrollbar { display: none; }
+        .phrase-chip {
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            font-size: 0.72rem;
+            color: #d1ded6;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s ease;
+        }
+        .phrase-chip:hover {
+            background: rgba(198, 156, 82, 0.25);
+            color: var(--brass-gold);
+        }
+        .chat-input-bar {
+            padding: 8px;
+            display: flex;
+            gap: 6px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .chat-input-bar input {
+            flex: 1;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: #fff;
+            font-size: 0.82rem;
+            outline: none;
+        }
+        .chat-input-bar input:focus {
+            border-color: var(--brass-gold);
+        }
+        .btn-send-chat {
+            background: var(--brass-gold);
+            color: #0e1611;
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        /* Палітра Емодзі (30 стікерів Durak Online) */
+        .emoji-picker-drawer {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: 340px;
+            max-width: 95vw;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+            z-index: 550;
+            padding: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.22s cubic-bezier(0.2, 0.8, 0.25, 1);
+        }
+        .emoji-picker-drawer.active {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .emoji-picker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--brass-gold);
+        }
+        .emoji-grid-30 {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .emoji-btn-item {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+            padding: 2px;
+        }
+        .emoji-btn-item:hover {
+            transform: scale(1.15);
+            background: rgba(198, 156, 82, 0.18);
+            border-color: var(--brass-gold);
+            z-index: 10;
+        }
+        .emoji-btn-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        /* ==========================================================================
+           8. МОДАЛЬНІ ВІКНА (МЕНЮ, ПРОФІЛЬ, ДОСЯГНЕННЯ)
+           ========================================================================== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            top: 50px;
+            z-index: 1000;
+            background: rgba(7, 12, 9, 0.85);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+
+        /* Банер очікування на столі */
+        .idle-table-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            background: rgba(14, 24, 18, 0.95);
+            border: 1px solid rgba(198, 156, 82, 0.45);
+            border-radius: 16px;
+            padding: 24px 32px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(198, 156, 82, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            max-width: 440px;
+            width: 90%;
+        }
+        .idle-banner-icon {
+            font-size: 2.2rem;
+            color: var(--brass-gold);
+        }
+        .idle-banner-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brass-gold);
+            letter-spacing: 1px;
+        }
+        .idle-banner-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .idle-banner-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-top: 6px;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            color: var(--brass-gold);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .modal-close-btn:hover { color: #fff; }
+        .modal-body {
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .form-input {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 7px;
+            color: #fff;
+            padding: 9px 12px;
+            font-size: 0.92rem;
+            outline: none;
+        }
+        .form-input:focus { border-color: var(--brass-gold); }
+
+        .theme-swatches-row {
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+        .theme-swatch-btn {
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .theme-swatch-btn.active {
+            border-color: var(--brass-gold);
+            background: rgba(198, 156, 82, 0.2);
+            color: var(--brass-gold);
+        }
+
+        .btn-gold {
+            background: var(--brass-gold);
+            color: #0f1712;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 7px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-gold:hover { background: var(--brass-gold-hover); }
+
+        .btn-outline {
+            background: transparent;
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 7px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .achievements-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            max-height: 52vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .achievement-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .achievement-card.unlocked {
+            border-color: rgba(198, 156, 82, 0.35);
+            background: rgba(198, 156, 82, 0.06);
+        }
+        .achievement-card.locked {
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+    </style>
+</head>
+<body class="theme-felt-emerald">
+
+    <div class="felt-grain"></div>
+
+    <!-- ТОСТИ ДОСЯГНЕНЬ -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ВЕРХНЯ НАВІГАЦІЯ -->
+    <header class="game-header">
+        <div class="header-brand">
+            <i class="fa-solid fa-crown text-amber-500"></i>
+            <span>ДУРАК</span>
+            <span id="badgeCurrentDeck" class="mode-badge">54 карти</span>
+            <span id="badgeCurrentMode" class="mode-badge">Підкидний + Переводний</span>
+        </div>
+
+        <div class="header-actions">
+            <button id="btnOpenLobby" class="btn-icon-nav" title="Меню гри">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <button id="btnOpenProfile" class="btn-icon-nav" title="Мій Профіль">
+                <i class="fa-solid fa-user-tie"></i>
+            </button>
+            <button id="btnOpenAchievements" class="btn-icon-nav" title="Досягнення">
+                <i class="fa-solid fa-medal"></i>
+            </button>
+            <button id="btnOpenCustomization" class="btn-icon-nav" title="Вигляд (Фон та Карти)">
+                <i class="fa-solid fa-palette"></i>
+            </button>
+            <button id="btnToggleSound" class="btn-icon-nav" title="Звук">
+                <i id="iconSoundState" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- СТІЛ ГРИ -->
+    <main class="poker-table-container">
+        <div class="table-layout">
+            
+            <!-- ЗОНА СУПЕРНИКА -->
+            <div class="opponent-zone">
+                <div class="player-info-container">
+                    <div id="oppEmojiAnchor"></div>
+                    <div class="opponent-profile-pill">
+                        <div id="oppAvatarFrame" class="avatar-frame">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span id="oppNameLabel" class="text-xs font-bold text-gray-200">Бот Гроссмейстер</span>
+                            <span id="oppStatusLabel" class="text-[10px] text-gray-400">Очікування...</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="opponentCardsRow" class="opponent-cards-row">
+                    <!-- Сорочки карт суперника -->
+                </div>
+            </div>
+
+            <!-- ЦЕНТР: КОЛОДА + БІЙНИЦЯ + ХАОТИЧНЕ БИТО -->
+            <div class="arena-center">
+                <!-- Ліворуч: Колода та відкритий козир -->
+                <div class="deck-column">
+                    <div class="deck-stack-area">
+                        <!-- Відкритий козир (НІКОЛИ НЕ ДЖОКЕР) -->
+                        <div id="trumpCardElement" class="card trump-underlay" style="display:none;"></div>
+                        <!-- Верхня сорочка закритої колоди -->
+                        <div id="deckTopCardElement" class="card deck-top-pile card-back-classic" style="display:none;"></div>
+                        <!-- Лічильник карт -->
+                        <div id="deckCountBadge" class="deck-count-badge" style="display:none;">54</div>
+                        <!-- Індикатор масті козиря -->
+                        <div id="trumpSuitBadge" class="trump-suit-indicator"></div>
+                    </div>
+                </div>
+
+                <!-- Банер швидкого старту (показується коли статус гри idle) -->
+                <div id="idleTableBanner" class="idle-table-banner">
+                    <div class="idle-banner-icon"><i class="fa-solid fa-crown"></i></div>
+                    <div class="idle-banner-title">Дурак Онлайн</div>
+                    <div class="idle-banner-subtitle">Оберіть режим у верхньому меню або почніть партію зараз</div>
+                    <div class="idle-banner-actions">
+                        <button id="btnQuickStartBot" class="btn-gold">
+                            <i class="fa-solid fa-robot"></i> Грати проти Розумного Бота
+                        </button>
+                        <button id="btnOpenLobbyFromTable" class="btn-outline">
+                            <i class="fa-solid fa-sliders"></i> Меню налаштувань столу
+                        </button>
+                    </div>
+                </div>
+
+                <!-- БІЙ: ПОЛЕ (до 6 пар карт) -->
+                <div id="battleground" class="battleground">
+                    <!-- Пари карток під час бою -->
+                </div>
+
+                <!-- 1. Праворуч: ХАОТИЧНИЙ ВІДБІЙ (БИТО) -->
+                <div class="discard-column">
+                    <div id="discardPileContainer" class="discard-pile-container">
+                        <div id="discardEmptyBox" class="discard-empty-box">
+                            <i class="fa-solid fa-box-archive text-sm"></i>
+                            <span>БИТО</span>
+                        </div>
+                        <div id="discardCardsLeaves"></div>
+                        <div id="discardCountBadge" class="discard-count-badge" style="display:none;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- НИЗ: КНОПКИ ДІЙ ТА РУКА ГРАВЦЯ (ПІДКАЗКУ ПРИБРАНО!) -->
+            <div class="player-bottom-zone">
+                <div id="myEmojiAnchor" style="position:relative;"></div>
+
+                <div id="turnIndicatorBadge" class="turn-indicator-badge" style="display:none;"></div>
+                <div class="action-controls-row">
+                    <button id="btnActionBito" class="btn-game-action btn-action-bito" disabled>
+                        <i class="fa-solid fa-check"></i> Бито
+                    </button>
+                    <button id="btnActionTake" class="btn-game-action btn-action-take" disabled>
+                        <i class="fa-solid fa-hand-holding-hand"></i> Беру
+                    </button>
+                    <button id="btnActionTransfer" class="btn-game-action btn-action-transfer" style="display:none;" disabled>
+                        <i class="fa-solid fa-share"></i> Перевести
+                    </button>
+                </div>
+
+                <div class="player-hand-wrapper">
+                    <div id="playerHandCards" class="player-hand-cards">
+                        <!-- Карти гравця -->
+                    </div>
+                </div>
+                <div class="player-action-bar">
+                    <button id="btnOpenEmojiPicker" class="btn-player-action" title="Стікери / Емодзі">
+                        <i class="fa-regular fa-face-smile"></i> Реакції
+                    </button>
+                    <button id="btnToggleChat" class="btn-player-action" title="Чат столу">
+                        <i class="fa-solid fa-comment-dots"></i> Чат
+                        <span id="chatUnreadDot" class="chat-unread-dot" style="display:none;"></span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 7. ВІКНО ЧАТУ СТОЛУ -->
+    <div id="chatDrawer" class="chat-drawer">
+        <div class="chat-header">
+            <span><i class="fa-regular fa-comments mr-1"></i> Чат столу</span>
+            <button id="btnCloseChat" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="chatMessagesBox" class="chat-messages-box">
+            <div style="text-align: center; color: var(--text-muted); font-size: 0.72rem; margin-top: 10px;">
+                Вітаємо за гральним столом!
+            </div>
+        </div>
+        <div class="chat-quick-phrases">
+            <span class="phrase-chip" data-phrase="Привіт усім! 👋">Привіт!</span>
+            <span class="phrase-chip" data-phrase="Гарний хід! 👍">Гарний хід!</span>
+            <span class="phrase-chip" data-phrase="Не підкидай мені! 😅">Не підкидай!</span>
+            <span class="phrase-chip" data-phrase="Оце так поворот! 🔥">Оце поворот!</span>
+            <span class="phrase-chip" data-phrase="Дякую за гру! 🤝">Дякую!</span>
+        </div>
+        <div class="chat-input-bar">
+            <input id="inputChatMessage" type="text" placeholder="Повідомлення..." maxlength="120">
+            <button id="btnSendChatMessage" class="btn-send-chat" title="Надіслати">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 8. ПАНЕЛЬ 30 ЕМОДЗІ (DURAK ONLINE) -->
+    <div id="emojiPickerDrawer" class="emoji-picker-drawer">
+        <div class="emoji-picker-header">
+            <span><i class="fa-regular fa-face-smile text-amber-400 mr-1"></i> Реакції</span>
+            <button id="btnCloseEmojiPicker" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="emojiGrid30" class="emoji-grid-30">
+            <!-- 30 стікерів генеруються динамічно -->
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЕ ВІКНО: ГОЛОВНЕ ЛОБІ / ВИБІР ГРИ -->
+    <div id="modalLobby" class="modal-overlay active">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-dice"></i>
+                    <span>Головне Меню Гри</span>
+                </div>
+                <button class="modal-close-btn" data-close="modalLobby"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Вибір колоди -->
+                <div class="form-group">
+                    <label class="form-label">Розмір колоди:</label>
+                    <div class="theme-swatches-row">
+                        <button class="theme-swatch-btn active" data-deck-size="54">
+                            <i class="fa-solid fa-layer-group"></i> 54 карти (з Джокерами)
+                        </button>
+                        <button class="theme-swatch-btn" data-deck-size="36">
+                            <i class="fa-solid fa-clone"></i> 36 карт (Класична)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Вибір правил -->
+                <div class="form-group">
+                    <label class="form-label">Режим правил:</label>
+                    <div class="theme-swatches-row">
+                        <button class="theme-swatch-btn active" data-rule-mode="combined">
+                            Підкидний + Переводний
+                        </button>
+                        <button class="theme-swatch-btn" data-rule-mode="podkidnoy">
+                            Тільки Підкидний
+                        </button>
+                        <button class="theme-swatch-btn" data-rule-mode="perevodnoy">
+                            Тільки Переводний
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+                    <button id="btnStartBotGame" class="btn-gold">
+                        <i class="fa-solid fa-robot"></i> Грати проти Розумного Бота
+                    </button>
+
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.78rem;">— АБО ГРАТИ З ДРУГОМ ОНЛАЙН —</div>
+
+                    <button id="btnCreateOnlineRoom" class="btn-outline">
+                        <i class="fa-solid fa-plus-circle"></i> Створити онлайн кімнату
+                    </button>
+
+                    <div style="display: flex; gap: 8px;">
+                        <input id="inputJoinCode" type="text" class="form-input" style="flex:1; text-transform:uppercase;" placeholder="Код кімнати (5 цифр)" maxlength="6">
+                        <button id="btnJoinOnlineRoom" class="btn-outline">
+                            Приєднатися
+                        </button>
+                    </div>
+                </div>
+
+                <div id="roomInfoBox" style="display: none; background: rgba(198,156,82,0.1); border: 1px dashed var(--brass-gold); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 0.8rem; color: var(--brass-gold); font-weight: 600;">Код вашої кімнати:</div>
+                    <div id="labelRoomCode" style="font-size: 1.6rem; font-family: monospace; font-weight: 800; letter-spacing: 3px; color: #fff; margin: 4px 0;">-----</div>
+                    <div style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Очікуємо підключення друга...</div>
+                    <button id="btnCopyInviteLink" class="btn-gold" style="width: 100%; font-size: 0.82rem; padding: 8px;">
+                        <i class="fa-regular fa-copy"></i> Скопіювати посилання для друга
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЕ ВІКНО: ПРОФІЛЬ -->
+    <div id="modalProfile" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Профіль Гравця</span>
+                </div>
+                <button class="modal-close-btn" data-close="modalProfile"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div id="profileCurrentAvatar" class="avatar-frame" style="width: 64px; height: 64px; font-size: 1.8rem;">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <input id="inputProfileNick" type="text" class="form-input" placeholder="Ваш нікнейм" maxlength="20">
+                        <input id="inputProfileBio" type="text" class="form-input" style="font-size: 0.82rem;" placeholder="Короткий опис чи статус" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Виберіть готову аватарку:</label>
+                    <div id="avatarPresetsGrid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Або завантажте власне фото:</label>
+                    <input id="inputFileAvatar" type="file" accept="image/*" style="font-size: 0.8rem; color: var(--text-muted);">
+                </div>
+
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--brass-gold); margin-bottom: 8px;">Ваша статистика:</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.82rem;">
+                        <div>Партій зіграно: <strong id="statGamesCount">0</strong></div>
+                        <div>Перемог: <strong id="statWinsCount">0</strong></div>
+                        <div>Відсоток перемог: <strong id="statWinrate">0%</strong></div>
+                        <div>Відбито Джокерами: <strong id="statJokersBeaten">0</strong></div>
+                        <div>Успішних переведень: <strong id="statTransfers">0</strong></div>
+                        <div>Погонів повішено: <strong id="statPogony">0</strong></div>
+                    </div>
+                </div>
+
+                <button id="btnSaveProfile" class="btn-gold">
+                    <i class="fa-solid fa-check"></i> Зберегти зміни
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЕ ВІКНО: ДОСЯГНЕННЯ -->
+    <div id="modalAchievements" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-medal"></i>
+                    <span>Досягнення (<span id="unlockedCountHeader">0</span>/30)</span>
+                </div>
+                <button class="modal-close-btn" data-close="modalAchievements"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="achievementsList" class="achievements-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЕ ВІКНО: ПЕРСОНАЛІЗАЦІЯ -->
+    <div id="modalCustomization" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fa-solid fa-palette"></i>
+                    <span>Персоналізація гри</span>
+                </div>
+                <button class="modal-close-btn" data-close="modalCustomization"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Колір сукна столу:</label>
+                    <div class="theme-swatches-row">
+                        <button class="theme-swatch-btn active" data-table-theme="theme-felt-emerald">
+                            <i class="fa-solid fa-circle text-emerald-600"></i> Смарагд
+                        </button>
+                        <button class="theme-swatch-btn" data-table-theme="theme-felt-navy">
+                            <i class="fa-solid fa-circle text-blue-900"></i> Королівський Синій
+                        </button>
+                        <button class="theme-swatch-btn" data-table-theme="theme-felt-slate">
+                            <i class="fa-solid fa-circle text-slate-700"></i> Матовий Графіт
+                        </button>
+                        <button class="theme-swatch-btn" data-table-theme="theme-felt-crimson">
+                            <i class="fa-solid fa-circle text-red-900"></i> Бордовий Оксамит
+                        </button>
+                        <button class="theme-swatch-btn" data-table-theme="theme-felt-wood">
+                            <i class="fa-solid fa-circle text-amber-900"></i> Темний Горіх
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Стиль сорочки карт:</label>
+                    <div class="theme-swatches-row">
+                        <button class="theme-swatch-btn active" data-card-back="card-back-classic">
+                            Вінтажна Синя
+                        </button>
+                        <button class="theme-swatch-btn" data-card-back="card-back-crimson">
+                            Бордо з золотом
+                        </button>
+                        <button class="theme-swatch-btn" data-card-back="card-back-gold">
+                            Темна Геометрія
+                        </button>
+                        <button class="theme-swatch-btn" data-card-back="card-back-obsidian">
+                            Обсидіан
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНЕ ВІКНО: ФІНАЛ ГРИ -->
+    <div id="modalGameOver" class="modal-overlay">
+        <div class="modal-card" style="text-align: center; padding: 24px;">
+            <div id="gameOverTrophyIcon" style="font-size: 3.5rem; color: var(--brass-gold); margin-bottom: 12px;">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 id="gameOverTitle" style="font-family: 'Cinzel', serif; font-size: 1.6rem; color: #fff; margin-bottom: 8px;">
+                ПЕРЕМОГА!
+            </h2>
+            <p id="gameOverSubtext" style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 20px;">
+                Суперник залишився в дурнях!
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="btnRestartGame" class="btn-gold" style="padding: 10px 24px;">
+                    <i class="fa-solid fa-rotate-right"></i> Грати знову
+                </button>
+                <button id="btnBackToMenu" class="btn-outline" style="padding: 10px 20px;">
+                    У лобі
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="startupError" role="alert" style="display:none; position:fixed; inset:auto 12px 12px; z-index:20000; max-height:35vh; overflow:auto; padding:12px; border:1px solid #ef4444; border-radius:8px; background:#2b1010; color:#fff; font:13px/1.4 monospace; white-space:pre-wrap;"></div>
+    <script>
+        // Surface initialization failures on the page instead of leaving every
+        // control silently inactive.
+        window.addEventListener('error', function (event) {
+            var panel = document.getElementById('startupError');
+            if (!panel) return;
+            panel.style.display = 'block';
+            panel.textContent = 'Помилка запуску гри: ' + (event.message || 'невідома помилка') +
+                (event.filename ? '\n' + event.filename + ':' + event.lineno + ':' + event.colno : '');
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+            var panel = document.getElementById('startupError');
+            if (!panel) return;
+            panel.style.display = 'block';
+            panel.textContent = 'Помилка запуску гри: ' + String(event.reason && (event.reason.stack || event.reason.message) || event.reason);
+        });
+    </script>
+
+    <!-- ==========================================================================
+       ГОЛОВНИЙ СКРИПТ ГРИ
+       ========================================================================== -->
+    <script>
+    (function() {
+        'use strict';
+
+        /* ----------------------------------------------------------------------
+           1. ЗВУКОВИЙ РУШІЙ
+           ---------------------------------------------------------------------- */
+        class CardAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+                this.FILES = {
+                    slide:    'sounds/card_slide.mp3',
+                    snap:     'sounds/card_snap.mp3',
+                    bito:     'sounds/card_bito.mp3',
+                    take:     'sounds/card_take.mp3',
+                    deal:     'sounds/card_deal.mp3',
+                    transfer: 'sounds/card_transfer.mp3',
+                    joker:    'sounds/joker_play.mp3',
+                    win:      'sounds/win.mp3',
+                    lose:     'sounds/lose.mp3',
+                    achievement: 'sounds/achievement.mp3',
+                    uiClick:  'sounds/ui_click.mp3',
+                    shuffle:  'sounds/shuffle.mp3'
+                };
+            }
+
+            _initCtx() {
+                if (!this.ctx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    if (AC) this.ctx = new AC();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            }
+
+            _playFileOrSynth(key, synthCallback) {
+                if (!this.enabled) return;
+                const path = this.FILES[key];
+                if (!path) {
+                    if (synthCallback) synthCallback();
+                    return;
+                }
+                try {
+                    const audio = new Audio(path);
+                    audio.volume = 0.8;
+                    const promise = audio.play();
+                    if (promise !== undefined) {
+                        promise.catch(() => {
+                            if (synthCallback) synthCallback();
+                        });
+                    }
+                } catch (e) {
+                    if (synthCallback) synthCallback();
+                }
+            }
+
+            _synthSlide() {
+                try {
+                    this._initCtx();
+                    if (!this.ctx) return;
+                    const dur = 0.12;
+                    const buf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * dur), this.ctx.sampleRate);
+                    const data = buf.getChannelData(0);
+                    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (data.length * 0.3));
+                    const src = this.ctx.createBufferSource();
+                    src.buffer = buf;
+                    const flt = this.ctx.createBiquadFilter();
+                    flt.type = 'lowpass'; flt.frequency.value = 900;
+                    const g = this.ctx.createGain();
+                    g.gain.setValueAtTime(0.22, this.ctx.currentTime);
+                    if (g.gain.exponentialRampToValueAtTime) g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+                    src.connect(flt); flt.connect(g); g.connect(this.ctx.destination);
+                    src.start();
+                } catch(e) {}
+            }
+
+            _synthSnap() {
+                try {
+                    this._initCtx();
+                    if (!this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(220, now);
+                    if (osc.frequency.exponentialRampToValueAtTime) osc.frequency.exponentialRampToValueAtTime(60, now + 0.07);
+                    g.gain.setValueAtTime(0.32, now);
+                    if (g.gain.exponentialRampToValueAtTime) g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+                    osc.connect(g); g.connect(this.ctx.destination);
+                    osc.start(); osc.stop(now + 0.08);
+                    this._synthSlide();
+                } catch(e) {}
+            }
+
+            _synthBito() {
+                try {
+                    this._initCtx();
+                    if (!this.ctx) return;
+                    const dur = 0.25;
+                    const buf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * dur), this.ctx.sampleRate);
+                    const data = buf.getChannelData(0);
+                    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / data.length);
+                    const src = this.ctx.createBufferSource();
+                    src.buffer = buf;
+                    const flt = this.ctx.createBiquadFilter();
+                    flt.type = 'bandpass'; flt.frequency.value = 750;
+                    const g = this.ctx.createGain();
+                    g.gain.setValueAtTime(0.26, this.ctx.currentTime);
+                    if (g.gain.exponentialRampToValueAtTime) g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+                    src.connect(flt); flt.connect(g); g.connect(this.ctx.destination);
+                    src.start();
+                } catch(e) {}
+            }
+
+            _synthWin() {
+                try {
+                    this._initCtx();
+                    if (!this.ctx) return;
+                    [261.63, 329.63, 392.00, 523.25].forEach((freq, idx) => {
+                        const t = this.ctx.currentTime + idx * 0.12;
+                        const osc = this.ctx.createOscillator();
+                        const g = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, t);
+                        g.gain.setValueAtTime(0.22, t);
+                        if (g.gain.exponentialRampToValueAtTime) g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+                        osc.connect(g); g.connect(this.ctx.destination);
+                        osc.start(t); osc.stop(t + 0.5);
+                    });
+                } catch(e) {}
+            }
+
+            playSlide() { this._playFileOrSynth('slide', () => this._synthSlide()); }
+            playSnap() { this._playFileOrSynth('snap', () => this._synthSnap()); }
+            playBito() { this._playFileOrSynth('bito', () => this._synthBito()); }
+            playTake() { this._playFileOrSynth('take', () => this._synthSlide()); }
+            playDeal() { this._playFileOrSynth('deal', () => this._synthSlide()); }
+            playTransfer() { this._playFileOrSynth('transfer', () => { this._synthSnap(); setTimeout(() => this._synthSlide(), 70); }); }
+            playJoker() { this._playFileOrSynth('joker', () => this._synthSnap()); }
+            playWin() { this._playFileOrSynth('win', () => this._synthWin()); }
+            playLose() { this._playFileOrSynth('lose', () => this._synthBito()); }
+            playAchievement() { this._playFileOrSynth('achievement', () => this._synthSnap()); }
+            playUiClick() { this._playFileOrSynth('uiClick', () => this._synthSlide()); }
+        }
+
+        const audio = new CardAudioEngine();
+
+        /* ----------------------------------------------------------------------
+           2. ПРОФІЛЬ ГРАВЦЯ ТА ЗБЕРЕЖЕННЯ
+           ---------------------------------------------------------------------- */
+        const AVATAR_PRESETS = [
+            { id: 'king', icon: 'fa-solid fa-crown', label: 'Король' },
+            { id: 'queen', icon: 'fa-solid fa-gem', label: 'Дама' },
+            { id: 'joker', icon: 'fa-solid fa-hat-wizard', label: 'Джокер' },
+            { id: 'gentleman', icon: 'fa-solid fa-user-tie', label: 'Джентльмен' },
+            { id: 'detective', icon: 'fa-solid fa-user-secret', label: 'Детектив' },
+            { id: 'owl', icon: 'fa-solid fa-feather-pointed', label: 'Сова' },
+            { id: 'shield', icon: 'fa-solid fa-shield-halved', label: 'Захисник' },
+            { id: 'dice', icon: 'fa-solid fa-dice-d20', label: 'Азарт' }
+        ];
+
+        let profile = {
+            nickname: 'Гравець ' + Math.floor(100 + Math.random() * 900),
+            bio: 'Майстер тактичного захисту',
+            avatarType: 'preset',
+            avatarPreset: 'gentleman',
+            avatarCustomData: null,
+            tableTheme: 'theme-felt-emerald',
+            cardBack: 'card-back-classic',
+            stats: {
+                games: 0,
+                wins: 0,
+                losses: 0,
+                jokersBeaten: 0,
+                transfers: 0,
+                pogony: 0
+            },
+            achievements: []
+        };
+
+        function loadProfile() {
+            try {
+                const saved = localStorage.getItem('durak_profile_v3');
+                if (saved) profile = { ...profile, ...JSON.parse(saved) };
+            } catch (e) {}
+        }
+        function saveProfile() {
+            try {
+                localStorage.setItem('durak_profile_v3', JSON.stringify(profile));
+            } catch (e) {}
+        }
+
+        /* ----------------------------------------------------------------------
+           3. ДОСЯГНЕННЯ
+           ---------------------------------------------------------------------- */
+        const ACHIEVEMENTS_DB = [
+            { id: 'first_win', title: 'Перша масть', desc: 'Здобути першу перемогу в будь-якому режимі', icon: 'fa-solid fa-trophy' },
+            { id: 'streak_3', title: 'Ударний темп', desc: 'Виграти 3 партії поспіль', icon: 'fa-solid fa-fire' },
+            { id: 'veteran_10', title: 'Досвідчений гравець', desc: 'Зіграти 10 партій', icon: 'fa-solid fa-clock-rotate-left' },
+            { id: 'veteran_25', title: 'Ветеран колоди', desc: 'Завершити 25 партій', icon: 'fa-solid fa-medal' },
+            { id: 'master_50', title: 'Гросмейстер столу', desc: 'Здобути 50 перемог', icon: 'fa-solid fa-award' },
+            { id: 'joker_shield', title: 'Джокерний щит', desc: 'Вперше успішно побити карту Джокером', icon: 'fa-solid fa-shield-virus' },
+            { id: 'joker_ace_slayer', title: 'Королівське зневаження', desc: 'Побити Джокером козирного Туза суперника', icon: 'fa-solid fa-wand-magic-sparkles' },
+            { id: 'double_joker_hand', title: 'Подвійне дно', desc: 'Зібрати в руці одночасно двох Джокерів', icon: 'fa-solid fa-masks-theater' },
+            { id: 'transfer_first', title: 'Стрілочник', desc: 'Успішно перевести атаку на суперника', icon: 'fa-solid fa-share' },
+            { id: 'transfer_heavy', title: 'Важкий тягар', desc: 'Перевести стіл з 3 або більше карт', icon: 'fa-solid fa-weight-hanging' },
+            { id: 'full_barrage_6', title: 'Повний завал', desc: 'Підкинути супернику всі 6 карт за раунд', icon: 'fa-solid fa-cubes-stacked' },
+            { id: 'greedy_bank', title: 'Щедрий подарунок', desc: 'Змусити суперника взяти 8+ карт за один хід', icon: 'fa-solid fa-sack-dollar' },
+            { id: 'pogony_dealt', title: 'З погонами!', desc: 'Закінчити переможну партію шістками', icon: 'fa-solid fa-ribbon' },
+            { id: 'clean_sheet_win', title: 'Сухий рахунок', desc: 'Виграти партію, не взявши жодної карти за всю гру', icon: 'fa-solid fa-star' },
+            { id: 'iron_defense', title: 'Залізний мур', desc: 'Повністю відбитися від 6 карт без взяття', icon: 'fa-solid fa-chess-rook' },
+            { id: 'deck_54_enjoyer', title: 'Повна колода', desc: 'Зіграти партію великою колодою на 54 карти', icon: 'fa-solid fa-layer-group' },
+            { id: 'classic_36_purist', title: 'Класицист', desc: 'Зіграти партію класичною колодою на 36 карт', icon: 'fa-solid fa-clone' },
+            { id: 'online_duelist', title: 'Справжній суперник', desc: 'Зіграти партію з другом через онлайн кімнату', icon: 'fa-solid fa-globe' },
+            { id: 'emoji_spammer', title: 'Емоційний гравець', desc: 'Надіслати 5 емодзі-реакцій за гру', icon: 'fa-regular fa-face-smile' },
+            { id: 'chat_enthusiast', title: 'Співрозмовник', desc: 'Надіслати повідомлення в ігровий чат', icon: 'fa-regular fa-comments' }
+        ];
+
+        function unlockAchievement(id) {
+            if (profile.achievements.includes(id)) return;
+            const ach = ACHIEVEMENTS_DB.find(a => a.id === id);
+            if (!ach) return;
+            profile.achievements.push(id);
+            saveProfile();
+            showToast(ach);
+            audio.playAchievement();
+            renderAchievementsModal();
+        }
+
+        function showToast(ach) {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'achievement-toast';
+            el.innerHTML = `
+                <div class="toast-icon"><i class="${ach.icon}"></i></div>
+                <div>
+                    <div class="toast-title">Досягнення отримано!</div>
+                    <div style="font-size:0.82rem; font-weight:700; color:#fff;">${ach.title}</div>
+                    <div class="toast-desc">${ach.desc}</div>
+                </div>
+            `;
+            container.appendChild(el);
+            setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 4600);
+        }
+
+        /* ----------------------------------------------------------------------
+           4. КАРТКОВИЙ РУШІЙ (КОЛОДА 54/36, АТЛАСНИЙ СТИЛЬ)
+           ---------------------------------------------------------------------- */
+        const SUITS = [
+            { id: 'hearts', symbol: '♥', color: 'red' },
+            { id: 'diamonds', symbol: '♦', color: 'red' },
+            { id: 'clubs', symbol: '♣', color: 'black' },
+            { id: 'spades', symbol: '♠', color: 'black' }
+        ];
+
+        const RANKS_36 = [
+            { value: 6, label: '6' }, { value: 7, label: '7' },
+            { value: 8, label: '8' }, { value: 9, label: '9' },
+            { value: 10, label: '10' }, { value: 11, label: 'J' },
+            { value: 12, label: 'Q' }, { value: 13, label: 'K' },
+            { value: 14, label: 'A' }
+        ];
+
+        const RANKS_54 = [
+            { value: 2, label: '2' }, { value: 3, label: '3' },
+            { value: 4, label: '4' }, { value: 5, label: '5' },
+            ...RANKS_36
+        ];
+
+        function getCardImgSrc(card) {
+            if (!card) return '';
+            if (card.isJoker) {
+                return (card.jokerColor === 'red' || card.id === 'red_joker' || card.id === 'joker_red')
+                    ? 'cards/red_joker.png'
+                    : 'cards/black_joker.png';
+            }
+            const valNames = {
+                2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: '10',
+                11: 'jack', 12: 'queen', 13: 'king', 14: 'ace'
+            };
+            const rName = valNames[card.value] || card.value;
+            return `cards/${rName}_of_${card.suit}.png`;
+        }
+
+        function createDeck(deckSize = 54) {
+            const ranks = deckSize === 36 ? RANKS_36 : RANKS_54;
+            const deck = [];
+            for (const suit of SUITS) {
+                for (const r of ranks) {
+                    deck.push({
+                        id: `${r.rank}_of_${suit.id}`,
+                        shortId: `${suit.id}_${r.value}`,
+                        suit: suit.id,
+                        suitSymbol: suit.symbol,
+                        color: suit.color,
+                        value: r.value,
+                        label: r.label,
+                        isJoker: false
+                    });
+                }
+            }
+
+            if (deckSize === 54) {
+                deck.push({
+                    id: 'red_joker',
+                    shortId: 'joker_red',
+                    suit: 'joker',
+                    suitSymbol: '★',
+                    color: 'red',
+                    value: 99,
+                    label: 'JOKER',
+                    isJoker: true,
+                    jokerColor: 'red'
+                });
+                deck.push({
+                    id: 'black_joker',
+                    shortId: 'joker_black',
+                    suit: 'joker',
+                    suitSymbol: '★',
+                    color: 'black',
+                    value: 99,
+                    label: 'JOKER',
+                    isJoker: true,
+                    jokerColor: 'black'
+                });
+            }
+
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = deck[i];
+                deck[i] = deck[j];
+                deck[j] = temp;
+            }
+
+            return deck;
+        }
+
+        /* ----------------------------------------------------------------------
+           5. СТАН ГРИ
+           ---------------------------------------------------------------------- */
+        let state = {
+            deckSize: 54,
+            ruleMode: 'combined',
+            isOnline: false,
+            myRole: 'p1',
+            status: 'idle',
+            deck: [],
+            trumpCard: null,
+            trumpSuit: null,
+            table: [],
+            hands: { p1: [], p2: [] },
+            attacker: 'p1',
+            defender: 'p2',
+            transferCountThisTurn: 0,
+            hasDefendedAtLeastOne: false,
+            boutsCount: 0,
+            discardCount: 0,
+            discardLeaves: [], // { rotation, offsetX, offsetY }
+            p1TookCardsThisGame: 0,
+            consecutiveWins: 0,
+            isAnimating: false,
+            emojiCountThisGame: 0
+        };
+
+        function canAttackWithCard(card, playerKey) {
+            if (state.status !== 'playing' || state.isAnimating) return false;
+            if (state.attacker !== playerKey) return false;
+            if (card.isJoker) return false; // Залізне правило: Джокером ходити не можна!
+
+            const oppKey = playerKey === 'p1' ? 'p2' : 'p1';
+            const oppHand = state.hands[oppKey];
+            const uncoveredCount = state.table.filter(p => !p.defend).length;
+
+            if (uncoveredCount >= oppHand.length) return false;
+            const maxPairs = state.boutsCount === 0 ? 5 : 6;
+            if (state.table.length >= maxPairs) return false;
+
+            if (state.table.length === 0) return true;
+
+            if (state.ruleMode === 'perevodnoy' && !state.hasDefendedAtLeastOne) return false;
+
+            const allowedRanks = new Set();
+            state.table.forEach(p => {
+                if (p.attack && !p.attack.isJoker) allowedRanks.add(p.attack.value);
+                if (p.defend && !p.defend.isJoker) allowedRanks.add(p.defend.value);
+            });
+            return allowedRanks.has(card.value);
+        }
+
+        function canBeatCard(attackCard, defendCard, trumpSuit) {
+            if (!attackCard || !defendCard) return false;
+            if (defendCard.isJoker) return true; // Джокер б'є абсолютно все!
+
+            if (defendCard.suit === attackCard.suit) {
+                return defendCard.value > attackCard.value;
+            }
+            if (defendCard.suit === trumpSuit && attackCard.suit !== trumpSuit) {
+                return true;
+            }
+            return false;
+        }
+
+        function canTransferWithCard(card, playerKey) {
+            if (state.status !== 'playing' || state.isAnimating) return false;
+            if (state.defender !== playerKey) return false;
+            if (state.ruleMode === 'podkidnoy') return false;
+            if (card.isJoker) return false;
+
+            if (state.hasDefendedAtLeastOne) return false;
+            if (state.table.length === 0) return false;
+
+            const firstRank = state.table[0].attack.value;
+            const allSame = state.table.every(p => p.attack.value === firstRank && !p.defend);
+            if (!allSame) return false;
+
+            if (card.value !== firstRank) return false;
+
+            const nextPlayer = playerKey === 'p1' ? 'p2' : 'p1';
+            if (state.table.length + 1 > state.hands[nextPlayer].length) return false;
+
+            return true;
+        }
+
+        /* ----------------------------------------------------------------------
+           2. АНІМАЦІЯ ПОЛЬОТУ КАРТИ: ПРЯМО З РУК НА СТІЛ (БЕЗ ДЕТУРУ В КОЛОДУ!)
+           ---------------------------------------------------------------------- */
+        function animateCardGlide(fromRect, toRect, cardData, onComplete) {
+            const flyer = document.createElement('div');
+            flyer.className = 'card flying-card-anim ' + (cardData.isBack ? profile.cardBack : '');
+            if (!cardData.isBack && cardData.card) {
+                flyer.innerHTML = `<img src="${getCardImgSrc(cardData.card)}" class="card-img-atlas" draggable="false">`;
+            }
+            flyer.style.width = fromRect.width + 'px';
+            flyer.style.height = fromRect.height + 'px';
+
+            // Жорстко закріплюємо початкову позицію БЕЗ транзишну!
+            flyer.style.transition = 'none';
+            flyer.style.left = fromRect.left + 'px';
+            flyer.style.top = fromRect.top + 'px';
+            flyer.style.transform = cardData.startRotate ? `rotate(${cardData.startRotate}deg)` : 'rotate(0deg)';
+            flyer.style.opacity = '1';
+
+            document.body.appendChild(flyer);
+
+            // Примусовий reflow браузера
+            void flyer.offsetWidth;
+
+            // Тепер вмикаємо транзишн прямо до цілі
+            const duration = 220;
+            flyer.style.transition = `left ${duration}ms cubic-bezier(0.2, 0.8, 0.25, 1), top ${duration}ms cubic-bezier(0.2, 0.8, 0.25, 1), transform ${duration}ms cubic-bezier(0.2, 0.8, 0.25, 1)`;
+
+            requestAnimationFrame(() => {
+                flyer.style.left = toRect.left + 'px';
+                flyer.style.top = toRect.top + 'px';
+                flyer.style.transform = cardData.rotate ? `rotate(${cardData.rotate}deg)` : 'rotate(0deg)';
+            });
+
+            setTimeout(() => {
+                if (flyer.parentNode) flyer.parentNode.removeChild(flyer);
+                if (onComplete) onComplete();
+            }, duration + 25);
+        }
+
+        // Анімація роздачі карт на старті
+        function animateDeal(onComplete) {
+            state.isAnimating = true;
+            const deckEl = document.getElementById('deckTopCardElement');
+            const handEl = document.getElementById('playerHandCards');
+            const oppEl = document.getElementById('opponentCardsRow');
+
+            if (!deckEl || !handEl || !oppEl) {
+                state.isAnimating = false;
+                if (onComplete) onComplete();
+                return;
+            }
+
+            const deckRect = deckEl.getBoundingClientRect();
+            let round = 0;
+            const totalRounds = 6;
+
+            function dealPair() {
+                if (round >= totalRounds) {
+                    state.isAnimating = false;
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                round++;
+                audio.playSlide();
+
+                // Flyer to player
+                const pRect = handEl.getBoundingClientRect();
+                const flyerP1 = document.createElement('div');
+                flyerP1.className = 'card flying-card-anim ' + (profile.cardBack || 'card-back-classic');
+                flyerP1.style.width = deckRect.width + 'px';
+                flyerP1.style.height = deckRect.height + 'px';
+                flyerP1.style.transition = 'none';
+                flyerP1.style.left = deckRect.left + 'px';
+                flyerP1.style.top = deckRect.top + 'px';
+                flyerP1.style.opacity = '1';
+                document.body.appendChild(flyerP1);
+
+                // Flyer to opponent
+                const oRect = oppEl.getBoundingClientRect();
+                const flyerP2 = document.createElement('div');
+                flyerP2.className = 'card flying-card-anim ' + (profile.cardBack || 'card-back-classic');
+                flyerP2.style.width = deckRect.width + 'px';
+                flyerP2.style.height = deckRect.height + 'px';
+                flyerP2.style.transition = 'none';
+                flyerP2.style.left = deckRect.left + 'px';
+                flyerP2.style.top = deckRect.top + 'px';
+                flyerP2.style.opacity = '1';
+                document.body.appendChild(flyerP2);
+
+                void flyerP1.offsetWidth;
+
+                const flyDur = 150;
+                flyerP1.style.transition = `left ${flyDur}ms ease-out, top ${flyDur}ms ease-out, transform ${flyDur}ms ease-out, opacity ${flyDur}ms ease-out`;
+                flyerP2.style.transition = `left ${flyDur}ms ease-out, top ${flyDur}ms ease-out, transform ${flyDur}ms ease-out, opacity ${flyDur}ms ease-out`;
+
+                requestAnimationFrame(() => {
+                    const tx1 = pRect.left + (pRect.width / 2) - (deckRect.width / 2);
+                    const ty1 = pRect.top + (pRect.height / 2) - (deckRect.height / 2);
+                    flyerP1.style.left = tx1 + 'px';
+                    flyerP1.style.top = ty1 + 'px';
+                    flyerP1.style.transform = 'scale(0.98)';
+                    flyerP1.style.opacity = '0.7';
+
+                    const tx2 = oRect.left + (oRect.width / 2) - (deckRect.width / 2);
+                    const ty2 = oRect.top + (oRect.height / 2) - (deckRect.height / 2);
+                    flyerP2.style.left = tx2 + 'px';
+                    flyerP2.style.top = ty2 + 'px';
+                    flyerP2.style.transform = 'scale(0.55)';
+                    flyerP2.style.opacity = '0.7';
+                });
+
+                setTimeout(() => {
+                    if (flyerP1.parentNode) flyerP1.parentNode.removeChild(flyerP1);
+                    if (flyerP2.parentNode) flyerP2.parentNode.removeChild(flyerP2);
+                    setTimeout(dealPair, 30);
+                }, flyDur);
+            }
+
+            dealPair();
+        }
+
+        // 1. АНІМАЦІЯ ВІДБОЮ: КАРТИ ЛЕТЯТЬ У СТІС БИТО І ЗАЛИШАЮТЬСЯ ТАМ ХАОТИЧНО
+        function animateBito(onComplete) {
+            state.isAnimating = true;
+            const slots = document.querySelectorAll('.card-pair-slot');
+            const discardContainer = document.getElementById('discardPileContainer');
+            const dRect = discardContainer ? discardContainer.getBoundingClientRect() : null;
+
+            let count = 0;
+            const newRotations = [];
+
+            slots.forEach((slot, i) => {
+                const cards = slot.querySelectorAll('.card');
+                cards.forEach(cardEl => {
+                    const r = cardEl.getBoundingClientRect();
+                    const flyer = document.createElement('div');
+                    flyer.className = 'card flying-card-anim ' + profile.cardBack;
+                    flyer.style.width = r.width + 'px';
+                    flyer.style.height = r.height + 'px';
+                    flyer.style.transition = 'none';
+                    flyer.style.left = r.left + 'px';
+                    flyer.style.top = r.top + 'px';
+                    document.body.appendChild(flyer);
+                    cardEl.style.opacity = '0';
+                    count++;
+
+                    const rot = (Math.random() * 36 - 18);
+                    const offX = (Math.random() * 12 - 6);
+                    const offY = (Math.random() * 10 - 5);
+                    newRotations.push({ rot, offX, offY });
+
+                    void flyer.offsetWidth;
+                    const delay = i * 35;
+                    setTimeout(() => {
+                        flyer.style.transition = 'left 250ms ease-in, top 250ms ease-in, transform 250ms ease-in, opacity 250ms ease-in';
+                        if (dRect) {
+                            flyer.style.left = (dRect.left + offX) + 'px';
+                            flyer.style.top = (dRect.top + offY) + 'px';
+                        }
+                        flyer.style.transform = `rotate(${rot}deg) scale(0.95)`;
+
+                        setTimeout(() => {
+                            if (flyer.parentNode) flyer.parentNode.removeChild(flyer);
+                            count--;
+                            if (count === 0) {
+                                state.isAnimating = false;
+                                if (onComplete) onComplete(newRotations);
+                            }
+                        }, 260);
+                    }, delay);
+                });
+            });
+
+            if (count === 0) {
+                state.isAnimating = false;
+                if (onComplete) onComplete([]);
+            }
+        }
+
+        // Анімація взяття (БЕРУ)
+        function animateTake(defenderIsPlayer, onComplete) {
+            state.isAnimating = true;
+            const slots = document.querySelectorAll('.card-pair-slot');
+            const targetEl = defenderIsPlayer
+                ? document.getElementById('playerHandCards')
+                : document.getElementById('opponentCardsRow');
+            const tRect = targetEl ? targetEl.getBoundingClientRect() : null;
+
+            let count = 0;
+            slots.forEach((slot, i) => {
+                const cards = slot.querySelectorAll('.card');
+                cards.forEach(cardEl => {
+                    const r = cardEl.getBoundingClientRect();
+                    const flyer = document.createElement('div');
+                    flyer.className = cardEl.className + ' flying-card-anim';
+                    flyer.innerHTML = cardEl.innerHTML;
+                    flyer.style.width = r.width + 'px';
+                    flyer.style.height = r.height + 'px';
+                    flyer.style.transition = 'none';
+                    flyer.style.left = r.left + 'px';
+                    flyer.style.top = r.top + 'px';
+                    document.body.appendChild(flyer);
+                    cardEl.style.opacity = '0';
+                    count++;
+
+                    void flyer.offsetWidth;
+                    const delay = i * 30;
+                    setTimeout(() => {
+                        flyer.style.transition = 'left 230ms ease-in, top 230ms ease-in, transform 230ms ease-in, opacity 230ms ease-in';
+                        if (tRect) {
+                            flyer.style.left = (tRect.left + tRect.width / 2 - r.width / 2) + 'px';
+                            flyer.style.top = (tRect.top + tRect.height / 2 - r.height / 2) + 'px';
+                        }
+                        flyer.style.transform = defenderIsPlayer ? 'scale(0.85)' : 'scale(0.55)';
+                        flyer.style.opacity = '0';
+
+                        setTimeout(() => {
+                            if (flyer.parentNode) flyer.parentNode.removeChild(flyer);
+                            count--;
+                            if (count === 0) {
+                                state.isAnimating = false;
+                                if (onComplete) onComplete();
+                            }
+                        }, 240);
+                    }, delay);
+                });
+            });
+
+            if (count === 0) {
+                state.isAnimating = false;
+                if (onComplete) onComplete();
+            }
+        }
+
+        /* ----------------------------------------------------------------------
+           6. ІГРОВИЙ ЦИКЛ ТА ХОДИ
+           ---------------------------------------------------------------------- */
+        function startNewLocalGame(deckSize = 54, ruleMode = 'combined') {
+            state.deckSize = deckSize;
+            state.ruleMode = ruleMode;
+            state.isOnline = false;
+            state.myRole = 'p1';
+            state.status = 'playing';
+            state.table = [];
+            state.boutsCount = 0;
+            state.discardCount = 0;
+            state.discardLeaves = [];
+            state.transferCountThisTurn = 0;
+            state.hasDefendedAtLeastOne = false;
+            state.p1TookCardsThisGame = 0;
+            state.emojiCountThisGame = 0;
+
+            const deck = createDeck(deckSize);
+            state.hands.p1 = deck.splice(0, 6);
+            state.hands.p2 = deck.splice(0, 6);
+
+            // Козир НІКОЛИ не є Джокером
+            if (deck[deck.length - 1].isJoker) {
+                const nonJokerIdx = deck.findIndex(c => !c.isJoker);
+                if (nonJokerIdx !== -1) {
+                    const temp = deck[deck.length - 1];
+                    deck[deck.length - 1] = deck[nonJokerIdx];
+                    deck[nonJokerIdx] = temp;
+                }
+            }
+            state.trumpCard = deck[deck.length - 1];
+            state.trumpSuit = state.trumpCard.suit;
+            state.deck = deck;
+
+            const p1Lowest = Math.min(...state.hands.p1.filter(c => c.suit === state.trumpSuit && !c.isJoker).map(c => c.value), 99);
+            const p2Lowest = Math.min(...state.hands.p2.filter(c => c.suit === state.trumpSuit && !c.isJoker).map(c => c.value), 99);
+
+            if (p2Lowest < p1Lowest) {
+                state.attacker = 'p2';
+                state.defender = 'p1';
+            } else {
+                state.attacker = 'p1';
+                state.defender = 'p2';
+            }
+
+            if (deckSize === 54) unlockAchievement('deck_54_enjoyer');
+            if (deckSize === 36) unlockAchievement('classic_36_purist');
+
+            closeAllModals();
+            renderUI();
+
+            animateDeal(() => {
+                renderUI();
+                audio.playDeal();
+                if (state.attacker === 'p2') {
+                    setTimeout(botThinkAndMove, 800);
+                }
+            });
+        }
+
+        function refillHands() {
+            const order = [state.attacker, state.defender];
+            order.forEach(role => {
+                while (state.hands[role].length < 6 && state.deck.length > 0) {
+                    state.hands[role].push(state.deck.shift());
+                }
+            });
+        }
+
+        function handleBito() {
+            if (state.status !== 'playing' || state.isAnimating) return;
+            const allDefended = state.table.length > 0 && state.table.every(p => p.defend !== null);
+            if (!allDefended) return;
+
+            if (state.table.length >= 6 && state.defender === 'p1') unlockAchievement('iron_defense');
+
+            audio.playBito();
+            const cardsCount = state.table.length * 2;
+
+            animateBito((newRotations) => {
+                state.discardCount += cardsCount;
+                // Додаємо кілька хаотичних карт у стіс бито
+                newRotations.slice(0, 3).forEach(r => state.discardLeaves.push(r));
+                if (state.discardLeaves.length > 7) state.discardLeaves = state.discardLeaves.slice(-7);
+
+                state.table = [];
+                state.hasDefendedAtLeastOne = false;
+                state.transferCountThisTurn = 0;
+                state.boutsCount++;
+
+                refillHands();
+
+                const prevDefender = state.defender;
+                state.attacker = prevDefender;
+                state.defender = prevDefender === 'p1' ? 'p2' : 'p1';
+
+                checkEndGame();
+                renderUI();
+
+                if (state.attacker === 'p2' && state.status === 'playing') {
+                    setTimeout(botThinkAndMove, 750);
+                }
+            });
+        }
+
+        function handleTake() {
+            if (state.status !== 'playing' || state.isAnimating) return;
+            if (state.table.length === 0) return;
+
+            const takenCards = [];
+            state.table.forEach(p => {
+                if (p.attack) takenCards.push(p.attack);
+                if (p.defend) takenCards.push(p.defend);
+            });
+
+            if (state.defender === 'p1') state.p1TookCardsThisGame += takenCards.length;
+            if (takenCards.length >= 8 && state.defender === 'p2') unlockAchievement('greedy_bank');
+
+            audio.playTake();
+            const defenderIsPlayer = (state.defender === 'p1');
+
+            animateTake(defenderIsPlayer, () => {
+                state.hands[state.defender].push(...takenCards);
+                state.table = [];
+                state.hasDefendedAtLeastOne = false;
+                state.transferCountThisTurn = 0;
+                state.boutsCount++;
+
+                refillHands();
+
+                checkEndGame();
+                renderUI();
+
+                if (state.attacker === 'p2' && state.status === 'playing') {
+                    setTimeout(botThinkAndMove, 750);
+                }
+            });
+        }
+
+        function handleTransfer(card, playerKey, sourceEl = null) {
+            if (state.isAnimating) return;
+            const hand = state.hands[playerKey];
+            const idx = hand.findIndex(c => c.id === card.id);
+            if (idx === -1) return;
+
+            function finalize() {
+                hand.splice(idx, 1);
+                state.table.push({ attack: card, defend: null });
+                state.transferCountThisTurn++;
+                audio.playTransfer();
+
+                if (playerKey === 'p1') {
+                    profile.stats.transfers++;
+                    saveProfile();
+                    unlockAchievement('transfer_first');
+                    if (state.table.length >= 3) unlockAchievement('transfer_heavy');
+                }
+
+                const oldDef = state.defender;
+                state.defender = state.attacker;
+                state.attacker = oldDef;
+
+                renderUI();
+                if (state.defender === 'p2' && state.status === 'playing') {
+                    setTimeout(botThinkAndMove, 750);
+                }
+            }
+
+            if (sourceEl) {
+                const fromRect = sourceEl.getBoundingClientRect();
+                const battleEl = document.getElementById('battleground');
+                const bRect = battleEl.getBoundingClientRect();
+                const toRect = {
+                    left: bRect.left + (state.table.length * 40) + 10,
+                    top: bRect.top + 10,
+                    width: fromRect.width,
+                    height: fromRect.height
+                };
+                sourceEl.style.opacity = '0';
+                animateCardGlide(fromRect, toRect, { card, isBack: false }, finalize);
+            } else {
+                finalize();
+            }
+        }
+
+        function checkEndGame() {
+            const p1Empty = state.hands.p1.length === 0;
+            const p2Empty = state.hands.p2.length === 0;
+            const deckEmpty = state.deck.length === 0;
+
+            if (deckEmpty && (p1Empty || p2Empty)) {
+                state.status = 'gameover';
+                profile.stats.games++;
+
+                if (p1Empty && !p2Empty) {
+                    profile.stats.wins++;
+                    state.consecutiveWins++;
+                    unlockAchievement('first_win');
+                    if (state.consecutiveWins >= 3) unlockAchievement('streak_3');
+                    if (profile.stats.games >= 10) unlockAchievement('veteran_10');
+                    if (profile.stats.games >= 25) unlockAchievement('veteran_25');
+                    if (profile.stats.wins >= 50) unlockAchievement('master_50');
+                    if (state.p1TookCardsThisGame === 0) unlockAchievement('clean_sheet_win');
+
+                    saveProfile();
+                    showGameOverModal(true);
+                } else if (!p1Empty && p2Empty) {
+                    profile.stats.losses++;
+                    state.consecutiveWins = 0;
+                    saveProfile();
+                    showGameOverModal(false);
+                } else {
+                    showGameOverModal(null);
+                }
+            }
+        }
+
+        function showGameOverModal(isWinner) {
+            const modal = document.getElementById('modalGameOver');
+            const icon = document.getElementById('gameOverTrophyIcon');
+            const title = document.getElementById('gameOverTitle');
+            const subtext = document.getElementById('gameOverSubtext');
+
+            if (isWinner === true) {
+                icon.innerHTML = '<i class="fa-solid fa-trophy text-amber-400"></i>';
+                title.textContent = 'ПЕРЕМОГА!';
+                subtext.textContent = 'Ви переграли суперника чисто і тактично!';
+                audio.playWin();
+                if (window.confetti) confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
+            } else if (isWinner === false) {
+                icon.innerHTML = '<i class="fa-solid fa-face-frown text-slate-400"></i>';
+                title.textContent = 'ВИ В ДУРНЯХ';
+                subtext.textContent = 'Наступного разу козирі будуть на вашому боці!';
+                audio.playLose();
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-handshake text-amber-300"></i>';
+                title.textContent = 'НІЧИЯ';
+                subtext.textContent = 'Обидва гравці майстерно вийшли з гри!';
+            }
+            modal.classList.add('active');
+        }
+
+        /* ----------------------------------------------------------------------
+           7. РОЗУМНИЙ БОТ (З АНІМАЦІЄЮ ПРЯМО З ВЕРХНЬОГО РЯДУ)
+           ---------------------------------------------------------------------- */
+        function botThinkAndMove() {
+            if (state.status !== 'playing' || state.isAnimating) return;
+            const botKey = 'p2';
+            const botHand = state.hands.p2;
+            const oppRowEl = document.getElementById('opponentCardsRow');
+
+            if (state.attacker === botKey) {
+                if (state.table.length === 0) {
+                    const playable = botHand.filter(c => !c.isJoker);
+                    if (playable.length === 0) return;
+
+                    playable.sort((a, b) => {
+                        const aWeight = a.suit === state.trumpSuit ? 100 + a.value : a.value;
+                        const bWeight = b.suit === state.trumpSuit ? 100 + b.value : b.value;
+                        return aWeight - bWeight;
+                    });
+
+                    const attackCard = playable[0];
+                    const idx = botHand.findIndex(c => c.id === attackCard.id);
+
+                    const oppCards = oppRowEl.querySelectorAll('.opp-card-mini');
+                    const fromEl = oppCards[oppCards.length - 1] || oppRowEl;
+                    const fromRect = (fromEl && fromEl.getBoundingClientRect().width > 0) 
+                        ? fromEl.getBoundingClientRect() 
+                        : { left: window.innerWidth/2 - 44, top: 60, width: 88, height: 126 };
+                    const battleEl = document.getElementById('battleground');
+                    const bRect = battleEl.getBoundingClientRect();
+                    const toRect = { left: bRect.left + (bRect.width / 2) - 44, top: bRect.top + 10, width: 88, height: 126 };
+
+                    state.isAnimating = true;
+                    animateCardGlide(fromRect, toRect, { card: attackCard, isBack: false }, () => {
+                        state.isAnimating = false;
+                        botHand.splice(idx, 1);
+                        state.table.push({ attack: attackCard, defend: null });
+                        audio.playSnap();
+                        renderUI();
+                    });
+                    return;
+                }
+
+                const allCovered = state.table.every(p => p.defend !== null);
+                if (allCovered) {
+                    const candidates = botHand.filter(c => canAttackWithCard(c, botKey));
+                    if (candidates.length > 0 && candidates[0].suit !== state.trumpSuit) {
+                        const card = candidates[0];
+                        const idx = botHand.findIndex(c => c.id === card.id);
+
+                        const oppCards = oppRowEl.querySelectorAll('.opp-card-mini');
+                        const fromEl = oppCards[oppCards.length - 1] || oppRowEl;
+                        const fromRect = (fromEl && fromEl.getBoundingClientRect().width > 0) 
+                            ? fromEl.getBoundingClientRect() 
+                            : { left: window.innerWidth/2 - 44, top: 60, width: 88, height: 126 };
+                        const battleEl = document.getElementById('battleground');
+                        const bRect = battleEl.getBoundingClientRect();
+                        const toRect = { left: bRect.left + (state.table.length * 36), top: bRect.top + 10, width: 88, height: 126 };
+
+                        state.isAnimating = true;
+                        animateCardGlide(fromRect, toRect, { card, isBack: false }, () => {
+                            state.isAnimating = false;
+                            botHand.splice(idx, 1);
+                            state.table.push({ attack: card, defend: null });
+                            audio.playSnap();
+                            renderUI();
+                        });
+                        return;
+                    } else {
+                        setTimeout(handleBito, 400);
+                        return;
+                    }
+                }
+            }
+
+            if (state.defender === botKey) {
+                if (state.ruleMode !== 'podkidnoy' && !state.hasDefendedAtLeastOne && state.table.length > 0) {
+                    const transferCard = botHand.find(c => canTransferWithCard(c, botKey));
+                    if (transferCard && transferCard.suit !== state.trumpSuit) {
+                        handleTransfer(transferCard, botKey);
+                        return;
+                    }
+                }
+
+                const uncoveredIdx = state.table.findIndex(p => !p.defend);
+                if (uncoveredIdx === -1) return;
+
+                const attackCard = state.table[uncoveredIdx].attack;
+                const defenseOptions = botHand.filter(c => canBeatCard(attackCard, c, state.trumpSuit));
+
+                if (defenseOptions.length > 0) {
+                    defenseOptions.sort((a, b) => {
+                        const aWeight = a.isJoker ? 500 : (a.suit === state.trumpSuit ? 200 + a.value : a.value);
+                        const bWeight = b.isJoker ? 500 : (b.suit === state.trumpSuit ? 200 + b.value : b.value);
+                        return aWeight - bWeight;
+                    });
+
+                    const chosen = defenseOptions[0];
+                    if (chosen.isJoker && state.deck.length > 10 && state.table.length <= 1) {
+                        setTimeout(handleTake, 450);
+                        return;
+                    }
+
+                    const idx = botHand.findIndex(c => c.id === chosen.id);
+                    const oppCards = oppRowEl.querySelectorAll('.opp-card-mini');
+                    const fromEl = oppCards[oppCards.length - 1] || oppRowEl;
+                    const fromRect = (fromEl && fromEl.getBoundingClientRect().width > 0) 
+                        ? fromEl.getBoundingClientRect() 
+                        : { left: window.innerWidth/2 - 44, top: 60, width: 88, height: 126 };
+                    const slots = document.querySelectorAll('.card-pair-slot');
+                    const targetSlot = slots[uncoveredIdx];
+                    const toRect = targetSlot ? targetSlot.getBoundingClientRect() : fromRect;
+
+                    state.isAnimating = true;
+                    animateCardGlide(fromRect, toRect, { card: chosen, isBack: false, rotate: 6 }, () => {
+                        state.isAnimating = false;
+                        botHand.splice(idx, 1);
+                        state.table[uncoveredIdx].defend = chosen;
+                        state.hasDefendedAtLeastOne = true;
+                        audio.playSnap();
+                        renderUI();
+                    });
+                    return;
+                } else {
+                    setTimeout(handleTake, 450);
+                }
+            }
+        }
+
+        /* ----------------------------------------------------------------------
+           8. РЕНДЕРИНГ ІНТЕРФЕЙСУ ТА ХАОТИЧНОГО ВІДБОЮ
+           ---------------------------------------------------------------------- */
+        function renderUI() {
+            const idleBanner = document.getElementById('idleTableBanner');
+            if (idleBanner) {
+                idleBanner.style.display = (state.status === 'idle') ? 'flex' : 'none';
+            }
+            document.getElementById('badgeCurrentDeck').textContent = state.deckSize + ' карт';
+            const modeNames = {
+                'combined': 'Підкидний + Переводний',
+                'podkidnoy': 'Тільки Підкидний',
+                'perevodnoy': 'Тільки Переводний'
+            };
+            document.getElementById('badgeCurrentMode').textContent = modeNames[state.ruleMode] || 'Стандарт';
+
+            // 1. Рука гравця (БЕЗ ЖОДНОГО ШТУЧНОГО ПІДСВІЧУВАННЯ!)
+            const pHandEl = document.getElementById('playerHandCards');
+            pHandEl.innerHTML = '';
+            
+            state.hands.p1.sort((a, b) => {
+                const aWeight = a.isJoker ? 300 : (a.suit === state.trumpSuit ? 100 + a.value : a.value);
+                const bWeight = b.isJoker ? 300 : (b.suit === state.trumpSuit ? 100 + b.value : b.value);
+                return aWeight - bWeight;
+            });
+
+            state.hands.p1.forEach((card) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'hand-card-slot';
+
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.dataset.cardId = card.id;
+
+                // Атласне зображення карти зі скріншота
+                cardEl.innerHTML = `<img src="${getCardImgSrc(card)}" class="card-img-atlas" draggable="false">`;
+
+                // Підтримка звичайного кліку
+                cardEl.onclick = (e) => {
+                    if (!cardEl._isDragging) onPlayerCardAction(card, cardEl);
+                };
+
+                // 6. ПЕРЕТЯГУВАННЯ КАРТИ (DRAG & DROP)
+                setupCardDrag(cardEl, card);
+
+                wrap.appendChild(cardEl);
+                pHandEl.appendChild(wrap);
+            });
+
+            // 2. Рука суперника
+            const oppCardsEl = document.getElementById('opponentCardsRow');
+            oppCardsEl.innerHTML = '';
+            const oppCount = state.hands.p2.length;
+            for (let i = 0; i < oppCount; i++) {
+                const mini = document.createElement('div');
+                mini.className = 'opp-card-mini ' + profile.cardBack;
+                oppCardsEl.appendChild(mini);
+            }
+
+            // 3. Колода та козир
+            const deckTopEl = document.getElementById('deckTopCardElement');
+            const trumpEl = document.getElementById('trumpCardElement');
+            const countBadge = document.getElementById('deckCountBadge');
+            const trumpSuitBadge = document.getElementById('trumpSuitBadge');
+
+            countBadge.textContent = state.deck.length;
+
+            if (state.status === 'playing') {
+                countBadge.style.display = 'block';
+
+                if (trumpSuitBadge && state.trumpSuit) {
+                    const suitObj = SUITS.find(s => s.id === state.trumpSuit);
+                    if (suitObj) {
+                        const col = suitObj.color === 'red' ? '#c02727' : '#f0f3f1';
+                        trumpSuitBadge.innerHTML = `<span style="color:${col}; font-size:1.4rem;">${suitObj.symbol}</span>`;
+                    }
+                }
+
+                if (state.deck.length > 1) {
+                    deckTopEl.style.display = 'block';
+                    deckTopEl.className = 'card deck-top-pile ' + profile.cardBack;
+                    if (state.trumpCard && !state.trumpCard.isJoker) {
+                        trumpEl.style.display = 'flex';
+                        trumpEl.innerHTML = `<img src="${getCardImgSrc(state.trumpCard)}" class="card-img-atlas" draggable="false">`;
+                    } else {
+                        trumpEl.style.display = 'none';
+                    }
+                } else if (state.deck.length === 1) {
+                    deckTopEl.style.display = 'none';
+                    if (state.trumpCard && !state.trumpCard.isJoker) {
+                        trumpEl.style.display = 'flex';
+                        trumpEl.innerHTML = `<img src="${getCardImgSrc(state.trumpCard)}" class="card-img-atlas" draggable="false">`;
+                    }
+                } else {
+                    deckTopEl.style.display = 'none';
+                    trumpEl.style.display = 'none';
+                }
+            } else {
+                deckTopEl.style.display = 'none';
+                trumpEl.style.display = 'none';
+                countBadge.style.display = 'none';
+                trumpSuitBadge.innerHTML = '';
+            }
+
+            // 4. Стіл (Бійниця)
+            const battleEl = document.getElementById('battleground');
+            battleEl.innerHTML = '';
+
+            state.table.forEach((pair, pairIdx) => {
+                const slot = document.createElement('div');
+                slot.className = 'card-pair-slot' + (pair.defend ? ' covered' : '');
+                slot.dataset.slotIdx = pairIdx;
+
+                const attEl = document.createElement('div');
+                attEl.className = 'card battle-card-attack';
+                attEl.innerHTML = `<img src="${getCardImgSrc(pair.attack)}" class="card-img-atlas" draggable="false">`;
+                slot.appendChild(attEl);
+
+                if (pair.defend) {
+                    const defEl = document.createElement('div');
+                    defEl.className = 'card battle-card-defend';
+                    defEl.innerHTML = `<img src="${getCardImgSrc(pair.defend)}" class="card-img-atlas" draggable="false">`;
+                    slot.appendChild(defEl);
+                }
+
+                battleEl.appendChild(slot);
+            });
+
+            // 1. ХАОТИЧНИЙ ВІДБІЙ (БИТО)
+            renderDiscardPile();
+
+            // 5. Кнопки управління
+            const btnBito = document.getElementById('btnActionBito');
+            const btnTake = document.getElementById('btnActionTake');
+            const btnTransfer = document.getElementById('btnActionTransfer');
+
+            if (state.status === 'playing') {
+                if (state.attacker === 'p1') {
+                    btnBito.style.display = 'inline-flex';
+                    btnTake.style.display = 'none';
+                    btnTransfer.style.display = 'none';
+
+                    const allDefended = state.table.length > 0 && state.table.every(p => p.defend !== null);
+                    btnBito.disabled = !allDefended || state.isAnimating;
+                } else {
+                    btnBito.style.display = 'none';
+                    btnTake.style.display = 'inline-flex';
+                    btnTake.disabled = state.table.length === 0 || state.isAnimating;
+
+                    const canAnyTransfer = state.hands.p1.some(c => canTransferWithCard(c, 'p1'));
+                    if (canAnyTransfer && !state.hasDefendedAtLeastOne) {
+                        btnTransfer.style.display = 'inline-flex';
+                        btnTransfer.disabled = state.isAnimating;
+                    } else {
+                        btnTransfer.style.display = 'none';
+                    }
+                }
+            } else {
+                btnBito.disabled = true;
+                btnTake.disabled = true;
+                btnTransfer.style.display = 'none';
+            }
+        }
+
+        // 1. ВІДОБРАЖЕННЯ ХАОТИЧНО СКЛАДЕНИХ КАРТ У ВІДБОЇ
+        function renderDiscardPile() {
+            const emptyBox = document.getElementById('discardEmptyBox');
+            const leavesContainer = document.getElementById('discardCardsLeaves');
+            const countBadge = document.getElementById('discardCountBadge');
+
+            leavesContainer.innerHTML = '';
+
+            if (state.discardCount > 0) {
+                emptyBox.style.display = 'none';
+                countBadge.style.display = 'block';
+                countBadge.textContent = state.discardCount;
+
+                // Якщо ще немає хаотичних обертів — генеруємо базовий стос
+                if (state.discardLeaves.length === 0) {
+                    state.discardLeaves = [
+                        { rot: -12, offX: -4, offY: 2 },
+                        { rot: 9, offX: 5, offY: -2 },
+                        { rot: -4, offX: -1, offY: 4 },
+                        { rot: 16, offX: 4, offY: -1 }
+                    ];
+                }
+
+                state.discardLeaves.forEach(leaf => {
+                    const el = document.createElement('div');
+                    el.className = 'discard-leaf ' + profile.cardBack;
+                    el.style.transform = `rotate(${leaf.rot}deg) translate(${leaf.offX}px, ${leaf.offY}px)`;
+                    leavesContainer.appendChild(el);
+                });
+            } else {
+                emptyBox.style.display = 'flex';
+                countBadge.style.display = 'none';
+            }
+        }
+
+        /* ----------------------------------------------------------------------
+           6. ДІЇ ТА ПЕРЕТЯГУВАННЯ КАРТ (DRAG & DROP)
+           ---------------------------------------------------------------------- */
+        function onPlayerCardAction(card, cardEl) {
+            if (state.status !== 'playing' || state.isAnimating) return;
+
+            // 1. Атака
+            if (state.attacker === 'p1') {
+                if (!canAttackWithCard(card, 'p1')) {
+                    shakeElement(cardEl);
+                    return;
+                }
+
+                const fromRect = cardEl.getBoundingClientRect();
+                const battleEl = document.getElementById('battleground');
+                const bRect = battleEl.getBoundingClientRect();
+                const toRect = {
+                    left: bRect.left + (state.table.length * 40) + 10,
+                    top: bRect.top + 10,
+                    width: fromRect.width,
+                    height: fromRect.height
+                };
+
+                state.isAnimating = true;
+                cardEl.style.opacity = '0';
+
+                animateCardGlide(fromRect, toRect, { card, isBack: false }, () => {
+                    state.isAnimating = false;
+                    const idx = state.hands.p1.findIndex(c => c.id === card.id);
+                    if (idx !== -1) state.hands.p1.splice(idx, 1);
+                    state.table.push({ attack: card, defend: null });
+                    audio.playSnap();
+                    renderUI();
+
+                    if (!state.isOnline) {
+                        setTimeout(botThinkAndMove, 750);
+                    }
+                });
+                return;
+            }
+
+            // 2. Захист або Переведення
+            if (state.defender === 'p1') {
+                if (canTransferWithCard(card, 'p1')) {
+                    handleTransfer(card, 'p1', cardEl);
+                    return;
+                }
+
+                const uncoveredIdx = state.table.findIndex(p => !p.defend);
+                if (uncoveredIdx === -1) {
+                    shakeElement(cardEl);
+                    return;
+                }
+
+                const attackCard = state.table[uncoveredIdx].attack;
+                if (!canBeatCard(attackCard, card, state.trumpSuit)) {
+                    shakeElement(cardEl);
+                    return;
+                }
+
+                if (card.isJoker) {
+                    profile.stats.jokersBeaten++;
+                    saveProfile();
+                    unlockAchievement('joker_shield');
+                    if (attackCard.value === 14 && attackCard.suit === state.trumpSuit) {
+                        unlockAchievement('joker_ace_slayer');
+                    }
+                }
+
+                const fromRect = cardEl.getBoundingClientRect();
+                const slots = document.querySelectorAll('.card-pair-slot');
+                const targetSlot = slots[uncoveredIdx];
+                const toRect = targetSlot ? targetSlot.getBoundingClientRect() : fromRect;
+
+                state.isAnimating = true;
+                cardEl.style.opacity = '0';
+
+                animateCardGlide(fromRect, toRect, { card, isBack: false, rotate: 6 }, () => {
+                    state.isAnimating = false;
+                    const idx = state.hands.p1.findIndex(c => c.id === card.id);
+                    if (idx !== -1) state.hands.p1.splice(idx, 1);
+                    state.table[uncoveredIdx].defend = card;
+                    state.hasDefendedAtLeastOne = true;
+                    if (card.isJoker) audio.playJoker();
+                    else audio.playSnap();
+                    renderUI();
+
+                    if (!state.isOnline) {
+                        setTimeout(botThinkAndMove, 750);
+                    }
+                });
+            }
+        }
+
+        // Похитування карти при неможливості ходу
+        function shakeElement(el) {
+            el.style.transform = 'translateX(-5px)';
+            setTimeout(() => { el.style.transform = 'translateX(5px)'; }, 50);
+            setTimeout(() => { el.style.transform = 'translateX(-3px)'; }, 100);
+            setTimeout(() => { el.style.transform = 'translateX(0)'; }, 150);
+        }
+
+        // Реалізація Touch / Mouse Drag & Drop
+        function setupCardDrag(cardEl, card) {
+            let isDragging = false;
+            let startX = 0, startY = 0;
+            let ghostEl = null;
+
+            function onPointerDown(e) {
+                if (state.status !== 'playing' || state.isAnimating) return;
+                startX = e.clientX;
+                startY = e.clientY;
+                cardEl._isDragging = false;
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            }
+
+            function onPointerMove(e) {
+                const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
+                if (!isDragging && dist > 8) {
+                    isDragging = true;
+                    cardEl._isDragging = true;
+                    cardEl.classList.add('dragging-now');
+
+                    ghostEl = document.createElement('div');
+                    ghostEl.className = 'card flying-card-ghost';
+                    ghostEl.innerHTML = `<img src="${getCardImgSrc(card)}" class="card-img-atlas" draggable="false">`;
+                    ghostEl.style.left = e.clientX + 'px';
+                    ghostEl.style.top = e.clientY + 'px';
+                    document.body.appendChild(ghostEl);
+
+                    document.getElementById('battleground').classList.add('drag-over-active');
+                }
+
+                if (isDragging && ghostEl) {
+                    ghostEl.style.left = e.clientX + 'px';
+                    ghostEl.style.top = e.clientY + 'px';
+                }
+            }
+
+            function onPointerUp(e) {
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+                document.getElementById('battleground').classList.remove('drag-over-active');
+
+                if (isDragging) {
+                    cardEl.classList.remove('dragging-now');
+                    if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+
+                    // Перевіряємо чи кинули над столом бійниці
+                    const battleEl = document.getElementById('battleground');
+                    const bRect = battleEl.getBoundingClientRect();
+                    const isInsideBattle = (
+                        e.clientX >= bRect.left && e.clientX <= bRect.right &&
+                        e.clientY >= bRect.top && e.clientY <= bRect.bottom
+                    );
+
+                    if (isInsideBattle) {
+                        onPlayerCardAction(card, cardEl);
+                    }
+
+                    setTimeout(() => { cardEl._isDragging = false; }, 50);
+                    isDragging = false;
+                }
+            }
+
+            cardEl.addEventListener('pointerdown', onPointerDown);
+        }
+
+        /* ----------------------------------------------------------------------
+           7. МОДАЛЬНІ ВІКНА ТА МЕНЮ (НАДІЙНА СИСТЕМА)
+           ---------------------------------------------------------------------- */
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        function toggleModal(modalId) {
+            const m = document.getElementById(modalId);
+            if (!m) return;
+            const wasActive = m.classList.contains('active');
+            closeAllModals();
+            if (!wasActive) {
+                m.classList.add('active');
+            }
+        }
+
+        // Закриття кліком по затемненому фону навколо вікна
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Кнопки закриття "Х"
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const target = btn.getAttribute('data-close');
+                const m = document.getElementById(target);
+                if (m) m.classList.remove('active');
+            };
+        });
+
+        // Кнопки верхнього навігаційного меню
+        document.getElementById('btnOpenLobby').onclick = () => toggleModal('modalLobby');
+        document.getElementById('btnOpenProfile').onclick = () => {
+            renderProfileModal();
+            toggleModal('modalProfile');
+        };
+        document.getElementById('btnOpenAchievements').onclick = () => {
+            renderAchievementsModal();
+            toggleModal('modalAchievements');
+        };
+        document.getElementById('btnOpenCustomization').onclick = () => toggleModal('modalCustomization');
+
+        // Кнопки на столі для швидкого старту
+        const btnTableStart = document.getElementById('btnQuickStartBot');
+        if (btnTableStart) {
+            btnTableStart.onclick = () => {
+                const activeDeckBtn = document.querySelector('[data-deck-size].active');
+                const activeRuleBtn = document.querySelector('[data-rule-mode].active');
+                const deckSize = activeDeckBtn ? parseInt(activeDeckBtn.dataset.deckSize) : 54;
+                const ruleMode = activeRuleBtn ? activeRuleBtn.dataset.ruleMode : 'combined';
+                startNewLocalGame(deckSize, ruleMode);
+            };
+        }
+        const btnOpenLobbyTable = document.getElementById('btnOpenLobbyFromTable');
+        if (btnOpenLobbyTable) {
+            btnOpenLobbyTable.onclick = () => toggleModal('modalLobby');
+        }
+
+        document.getElementById('btnActionBito').onclick = handleBito;
+        document.getElementById('btnActionTake').onclick = handleTake;
+
+        document.getElementById('btnStartBotGame').onclick = () => {
+            const activeDeckBtn = document.querySelector('[data-deck-size].active');
+            const activeRuleBtn = document.querySelector('[data-rule-mode].active');
+            const deckSize = activeDeckBtn ? parseInt(activeDeckBtn.dataset.deckSize) : 54;
+            const ruleMode = activeRuleBtn ? activeRuleBtn.dataset.ruleMode : 'combined';
+            startNewLocalGame(deckSize, ruleMode);
+        };
+
+        document.getElementById('btnCreateOnlineRoom').onclick = () => initPeerHost();
+        document.getElementById('btnJoinOnlineRoom').onclick = () => {
+            const code = document.getElementById('inputJoinCode').value.trim();
+            if (code.length >= 4) joinPeerRoom(code);
+            else alert('Введіть коректний код кімнати.');
+        };
+
+        document.getElementById('btnRestartGame').onclick = () => {
+            document.getElementById('modalGameOver').classList.remove('active');
+            startNewLocalGame(state.deckSize, state.ruleMode);
+        };
+        document.getElementById('btnBackToMenu').onclick = () => {
+            document.getElementById('modalGameOver').classList.remove('active');
+            document.getElementById('modalLobby').classList.add('active');
+        };
+
+        document.getElementById('btnToggleSound').onclick = () => {
+            audio.enabled = !audio.enabled;
+            const icon = document.getElementById('iconSoundState');
+            icon.className = audio.enabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-red-400';
+        };
+
+        document.querySelectorAll('[data-table-theme]').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('[data-table-theme]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const theme = btn.dataset.tableTheme;
+                document.body.className = theme;
+                profile.tableTheme = theme;
+                saveProfile();
+            };
+        });
+
+        document.querySelectorAll('[data-card-back]').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('[data-card-back]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                profile.cardBack = btn.dataset.cardBack;
+                saveProfile();
+                renderUI();
+            };
+        });
+
+        document.querySelectorAll('[data-deck-size]').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('[data-deck-size]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+        });
+        document.querySelectorAll('[data-rule-mode]').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('[data-rule-mode]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+        });
+
+
+        const chatDrawer = document.getElementById('chatDrawer');
+        const chatMessagesBox = document.getElementById('chatMessagesBox');
+        const inputChatMessage = document.getElementById('inputChatMessage');
+
+        document.getElementById('btnToggleChat').onclick = () => {
+            chatDrawer.classList.toggle('active');
+            document.getElementById('chatUnreadDot').style.display = 'none';
+            if (chatDrawer.classList.contains('active')) inputChatMessage.focus();
+        };
+        document.getElementById('btnCloseChat').onclick = () => {
+            chatDrawer.classList.remove('active');
+        };
+
+        function addChatMessage(sender, text, isMine) {
+            const row = document.createElement('div');
+            row.className = 'chat-msg-row ' + (isMine ? 'mine' : 'theirs');
+            row.innerHTML = `
+                <div class="chat-sender-name">${sender}</div>
+                <div class="chat-msg-bubble">${text}</div>
+            `;
+            chatMessagesBox.appendChild(row);
+            chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight;
+
+            if (!isMine && !chatDrawer.classList.contains('active')) {
+                document.getElementById('chatUnreadDot').style.display = 'block';
+            }
+        }
+
+        function sendCurrentChatMessage() {
+            const text = inputChatMessage.value.trim();
+            if (!text) return;
+            inputChatMessage.value = '';
+
+            addChatMessage(profile.nickname, text, true);
+            unlockAchievement('chat_enthusiast');
+            audio.playSlide();
+
+            // Відправка другу (якщо онлайн)
+            if (peerConn && peerConn.open) {
+                peerConn.send({ type: 'CHAT', sender: profile.nickname, text });
+            } else {
+                // Відповідь бота
+                setTimeout(() => {
+                    const botAnswers = [
+                        'Цікавий хід! Подивимось, що буде далі 🤔',
+                        'Не сподівайся, що я так просто віддам партію! 😉',
+                        'Гарна гра! Козирі все вирішать.',
+                        'Хм, треба подумати над захистом...',
+                        'Оце так дуель! 🔥',
+                        'Дякую за компанію за столом!'
+                    ];
+                    const reply = botAnswers[Math.floor(Math.random() * botAnswers.length)];
+                    addChatMessage('Бот Гроссмейстер', reply, false);
+                }, 1200);
+            }
+        }
+
+        document.getElementById('btnSendChatMessage').onclick = sendCurrentChatMessage;
+        inputChatMessage.onkeydown = (e) => { if (e.key === 'Enter') sendCurrentChatMessage(); };
+
+        document.querySelectorAll('[data-phrase]').forEach(chip => {
+            chip.onclick = () => {
+                inputChatMessage.value = chip.dataset.phrase;
+                sendCurrentChatMessage();
+            };
+        });
+
+        /* ----------------------------------------------------------------------
+           8. ЕМОДЗІ ПАНЕЛЬ ТА ВІДОБРАЖЕННЯ 3D РЕАКЦІЙ (DURAK ONLINE)
+           ---------------------------------------------------------------------- */
+        const emojiDrawer = document.getElementById('emojiPickerDrawer');
+        const emojiGrid = document.getElementById('emojiGrid30');
+
+        // Рендеримо 30 стікерів
+        for (let i = 1; i <= 30; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'emoji-btn-item';
+            btn.innerHTML = `<img src="emojis/emoji_${i}.png" alt="emoji ${i}" loading="lazy">`;
+            btn.onclick = () => triggerEmojiReaction(i, true);
+            emojiGrid.appendChild(btn);
+        }
+
+        document.getElementById('btnOpenEmojiPicker').onclick = () => {
+            emojiDrawer.classList.toggle('active');
+        };
+        document.getElementById('btnCloseEmojiPicker').onclick = () => {
+            emojiDrawer.classList.remove('active');
+        };
+
+        function triggerEmojiReaction(emojiId, isMine) {
+            emojiDrawer.classList.remove('active');
+            audio.playSnap();
+
+            if (isMine) {
+                state.emojiCountThisGame++;
+                if (state.emojiCountThisGame >= 5) unlockAchievement('emoji_spammer');
+            }
+
+            const anchor = isMine ? document.getElementById('myEmojiAnchor') : document.getElementById('oppEmojiAnchor');
+            if (anchor) {
+                const bubble = document.createElement('div');
+                bubble.className = 'emoji-bubble-float';
+                bubble.style.top = isMine ? '-110px' : '45px';
+                bubble.style.left = isMine ? '-45px' : '-45px';
+                bubble.innerHTML = `<img src="emojis/emoji_${emojiId}.png">`;
+                anchor.appendChild(bubble);
+
+                setTimeout(() => { if (bubble.parentNode) bubble.parentNode.removeChild(bubble); }, 2700);
+            }
+
+            // Мережева синхронізація
+            if (isMine && peerConn && peerConn.open) {
+                peerConn.send({ type: 'EMOJI', emojiId });
+            } else if (isMine) {
+                // Бот іноді відповідає своїм емодзі
+                if (Math.random() < 0.7) {
+                    setTimeout(() => {
+                        const botEmoji = Math.floor(1 + Math.random() * 30);
+                        triggerEmojiReaction(botEmoji, false);
+                    }, 1400);
+                }
+            }
+        }
+
+        /* ----------------------------------------------------------------------
+           9. МЕРЕЖА PEERJS
+           ---------------------------------------------------------------------- */
+        let peer = null, peerConn = null;
+
+        function initPeerHost() {
+            const randomCode = Math.floor(10000 + Math.random() * 90000).toString();
+            peer = new Peer('durak_' + randomCode);
+
+            peer.on('open', () => {
+                document.getElementById('labelRoomCode').textContent = randomCode;
+                document.getElementById('roomInfoBox').style.display = 'block';
+
+                const url = new URL(window.location.href);
+                url.searchParams.set('room', randomCode);
+                document.getElementById('btnCopyInviteLink').onclick = () => {
+                    navigator.clipboard.writeText(url.toString()).then(() => {
+                        alert('Посилання скопійовано! Надішліть його другу.');
+                    });
+                };
+            });
+
+            peer.on('connection', (conn) => {
+                peerConn = conn;
+                setupNetworkEvents();
+                unlockAchievement('online_duelist');
+            });
+        }
+
+        function joinPeerRoom(code) {
+            peer = new Peer();
+            peer.on('open', () => {
+                const conn = peer.connect('durak_' + code);
+                peerConn = conn;
+                setupNetworkEvents();
+                unlockAchievement('online_duelist');
+            });
+        }
+
+        function setupNetworkEvents() {
+            peerConn.on('open', () => {
+                closeAllModals();
+                document.getElementById('oppNameLabel').textContent = 'Друг онлайн';
+                document.getElementById('oppStatusLabel').textContent = 'Підключено';
+            });
+            peerConn.on('data', (data) => {
+                if (data.type === 'STATE_SYNC') {
+                    state = data.state;
+                    renderUI();
+                } else if (data.type === 'CHAT') {
+                    addChatMessage(data.sender, data.text, false);
+                } else if (data.type === 'EMOJI') {
+                    triggerEmojiReaction(data.emojiId, false);
+                }
+            });
+        }
+
+        /* ----------------------------------------------------------------------
+           10. МОДАЛЬНІ ВІКНА ТА ЛОБІ
+           ---------------------------------------------------------------------- */
+        function renderProfileModal() {
+            document.getElementById('inputProfileNick').value = profile.nickname;
+            document.getElementById('inputProfileBio').value = profile.bio;
+            document.getElementById('statGamesCount').textContent = profile.stats.games;
+            document.getElementById('statWinsCount').textContent = profile.stats.wins;
+            const winrate = profile.stats.games > 0 ? Math.round((profile.stats.wins / profile.stats.games) * 100) : 0;
+            document.getElementById('statWinrate').textContent = winrate + '%';
+            document.getElementById('statJokersBeaten').textContent = profile.stats.jokersBeaten;
+            document.getElementById('statTransfers').textContent = profile.stats.transfers;
+            document.getElementById('statPogony').textContent = profile.stats.pogony;
+
+            const grid = document.getElementById('avatarPresetsGrid');
+            grid.innerHTML = '';
+            AVATAR_PRESETS.forEach(p => {
+                const el = document.createElement('div');
+                el.style.aspectRatio = '1';
+                el.style.borderRadius = '50%';
+                el.style.background = 'rgba(255,255,255,0.06)';
+                el.style.border = (profile.avatarPreset === p.id && profile.avatarType === 'preset') ? '2px solid var(--brass-gold)' : '2px solid transparent';
+                el.style.display = 'flex';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'center';
+                el.style.fontSize = '1.3rem';
+                el.style.color = 'var(--brass-gold)';
+                el.style.cursor = 'pointer';
+                el.innerHTML = `<i class="${p.icon}"></i>`;
+                el.onclick = () => {
+                    profile.avatarType = 'preset';
+                    profile.avatarPreset = p.id;
+                    profile.avatarCustomData = null;
+                    renderProfileModal();
+                };
+                grid.appendChild(el);
+            });
+
+            const curAvatarEl = document.getElementById('profileCurrentAvatar');
+            if (profile.avatarType === 'custom' && profile.avatarCustomData) {
+                curAvatarEl.innerHTML = `<img src="${profile.avatarCustomData}" class="avatar-img">`;
+            } else {
+                const cur = AVATAR_PRESETS.find(p => p.id === profile.avatarPreset) || AVATAR_PRESETS[0];
+                curAvatarEl.innerHTML = `<i class="${cur.icon}"></i>`;
+            }
+        }
+
+        document.getElementById('inputFileAvatar').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 128; canvas.height = 128;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 128, 128);
+                    profile.avatarType = 'custom';
+                    profile.avatarCustomData = canvas.toDataURL('image/jpeg', 0.85);
+                    saveProfile();
+                    renderProfileModal();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('btnSaveProfile').onclick = () => {
+            const nick = document.getElementById('inputProfileNick').value.trim();
+            const bio = document.getElementById('inputProfileBio').value.trim();
+            if (nick) profile.nickname = nick;
+            profile.bio = bio;
+            saveProfile();
+            closeAllModals();
+        };
+
+        function renderAchievementsModal() {
+            const list = document.getElementById('achievementsList');
+            list.innerHTML = '';
+            document.getElementById('unlockedCountHeader').textContent = profile.achievements.length;
+
+            ACHIEVEMENTS_DB.forEach(ach => {
+                const isUnlocked = profile.achievements.includes(ach.id);
+                const el = document.createElement('div');
+                el.className = 'achievement-card ' + (isUnlocked ? 'unlocked' : 'locked');
+                el.innerHTML = `
+                    <div class="toast-icon"><i class="${ach.icon}"></i></div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.88rem; font-weight: 700; color: ${isUnlocked ? 'var(--brass-gold)' : '#fff'};">
+                            ${ach.title} ${isUnlocked ? '<i class="fa-solid fa-check text-xs ml-1"></i>' : ''}
+                        </div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted);">${ach.desc}</div>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        /* ----------------------------------------------------------------------
+           СТАРТ: З ГОЛОВНОГО МЕНЮ
+           ---------------------------------------------------------------------- */
+        loadProfile();
+        document.body.className = profile.tableTheme || 'theme-felt-emerald';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinCodeParam = urlParams.get('room');
+        if (joinCodeParam) {
+            document.getElementById('inputJoinCode').value = joinCodeParam;
+            joinPeerRoom(joinCodeParam);
+        } else {
+            document.getElementById('modalLobby').classList.add('active');
+            renderUI();
+        }
+
+    })();
+    </script>
+</body>
+</html>
